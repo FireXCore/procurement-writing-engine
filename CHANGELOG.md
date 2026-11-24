@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.0-alpha.4 — formal Persian spelling
+
+- Add a bounded exact-word formal tanwin policy to the default Virastar adapter.
+- Preserve already marked words, unrelated words and protected ranges.
+- Add the human-reported missing-tanwin regression to real engine and browser checks.
+
 ## 0.1.0-alpha.3 — review presentation and coverage
 
 - Independent bounded Persian orthography patches with exact reconstruction.

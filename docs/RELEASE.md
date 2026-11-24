@@ -1,6 +1,6 @@
 # Alpha release workflow
 
-The source bundle is not a published release. The existing public FireXCore repository uses the CI workflow below to publish the alpha.3 prerelease only after all required jobs succeed. The Windows script is an alternative for a fresh, privately staged repository; do not run both publication mechanisms for the same tag. The maintainer script creates a **private staging repository first**, tests the actual locked JS packages, checks security and package manifests, waits for GitHub CI for the exact commit, creates a GitHub prerelease, and finally changes repository visibility to public. It never publishes to npm, never force-pushes, and never changes another repository.
+The source bundle is not a published release. The existing public FireXCore repository uses the CI workflow below to publish the alpha.4 prerelease only after all required jobs succeed. The Windows script is an alternative for a fresh, privately staged repository; do not run both publication mechanisms for the same tag. The maintainer script creates a **private staging repository first**, tests the actual locked JS packages, checks security and package manifests, waits for GitHub CI for the exact commit, creates a GitHub prerelease, and finally changes repository visibility to public. It never publishes to npm, never force-pushes, and never changes another repository.
 
 ## Windows maintainer bootstrap
 
@@ -35,4 +35,4 @@ Production requires a versioned synthetic domain evaluation corpus, accepted acc
 
 ## Existing public repository release automation
 
-The CI workflow's final job is restricted to the canonical repository, main, a successful push or explicit workflow dispatch, and the explicit alpha.3 version. It checks the current main SHA, refuses existing tags, generates a tarball and checksum, downloads the dependency inventory from the same CI run, and creates a GitHub prerelease. No npm publish or external deployment occurs. The release job alone has contents-write permission. No release is created if a required upstream, browser, audit or contract job fails.
+The CI workflow's final job is restricted to the canonical repository, main, a successful push or explicit workflow dispatch, and the explicit alpha.4 version. It checks the current main SHA, refuses existing tags, generates a tarball and checksum, downloads the dependency inventory from the same CI run, and creates a GitHub prerelease. No npm publish or external deployment occurs. The release job alone has contents-write permission. No release is created if a required upstream, browser, audit or contract job fails.

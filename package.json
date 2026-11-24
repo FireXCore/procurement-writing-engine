@@ -1,6 +1,6 @@
 {
   "name": "procurement-writing-engine",
-  "version": "0.1.0-alpha.3",
+  "version": "0.1.0-alpha.4",
   "description": "Composable English and Persian writing review for procurement and technical commercial prose. No LLM required.",
   "private": true,
   "type": "module",

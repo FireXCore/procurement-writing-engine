@@ -1,9 +1,5 @@
-# Procurement Writing Engine 0.1.0-alpha.3
+# Procurement Writing Engine 0.1.0-alpha.4
 
-- Independent bounded Persian orthography proposals, verified source anchoring and exact reconstruction.
-- Accessible original/replacement presentation with isolated RTL and LTR text.
-- Automatic language detection without sample selection controls.
-- Limited demo-only protection for isolated uppercase alphanumeric identifiers, such as ABC999, with explicit inferred-range diagnostics.
-- Retains all Alpha.2 checks and adds positive and negative Unicode, alignment and identifier regression tests.
+Fix the human-reported formal Persian spelling omission لطفا → لطفاً. The default Virastar adapter composes a small exact-word local formal-writing allowlist with upstream normalization, without changing upstream options. Already marked and unrelated words remain unchanged by the new policy. All Alpha.3 regressions remain required, including protected ranges, independent patches and isolated RTL/LTR display.
 
-GitHub prerelease only. npm publication is intentionally disabled pending final human acceptance. No LLM, automatic Apply, general industrial parser or production qualification. Optional service providers still require separate validation. Use synthetic input in the demo.
+GitHub prerelease only; npm publication remains disabled pending final acceptance. No general Persian spelling/diacritization guarantee, no automatic Apply, no new dependency, no production qualification.

@@ -36,7 +36,7 @@ import { procurementPolicyRules, procurementAgreementRule } from '../src/index.m
 import { buildDemoSnapshot } from '../demo/regions.mjs';
 import { cases, locked } from './acceptance-fixtures.mjs';
 
-test('real engines: all eleven human acceptance examples and source protection', {timeout:120000}, async t=>{
+test('real engines: all human acceptance examples and source protection', {timeout:120000}, async t=>{
   const {binaryInlined}=await import('harper.js/binaryInlined');
   const harper=await createHarper({binary:binaryInlined,worker:false});
   try{

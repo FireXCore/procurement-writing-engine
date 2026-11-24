@@ -1,4 +1,5 @@
 import { orthographyEdits } from './orthography-diff.mjs';
+import { formalPersianOrthography } from './formal-persian.mjs';
 
 // Deny all documented transformations except narrow Persian orthography operations.
 // Changes to upstream defaults require requalification of the exact package version.
@@ -16,7 +17,8 @@ export function normalizerAdapter(normalize, {experimental=false}={}) {
 export async function createVirastar() {
   const {default:Virastar} = await import('virastar');
   const linter = new Virastar({...VIRASTAR_OPTIONS});
-  return normalizerAdapter(text=>linter.cleanup(text));
+  // Compose the reviewed local formal style policy after upstream cleanup.
+  return normalizerAdapter(text=>formalPersianOrthography(linter.cleanup(text)));
 }
 // Experimental TypeScript fork is an alternative, advisory-only provider; do not run both by default.
 export function experimentalVirastarAdapter(instance) {

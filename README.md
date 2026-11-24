@@ -41,7 +41,7 @@ The default recommended deployment profile is Harper for English and Virastar fo
 After the required CI gates pass and a prerelease appears on [GitHub Releases](https://github.com/FireXCore/procurement-writing-engine/releases), download the alpha tarball and `SHA256SUMS.txt`, verify the checksum, then install the local file. Public source alone does not indicate that a release artifact has passed qualification. The package is not published to the npm registry.
 
 ```sh
-npm install ./procurement-writing-engine-0.1.0-alpha.3.tgz
+npm install ./procurement-writing-engine-0.1.0-alpha.4.tgz
 npm install --save-exact harper.js@3.2.0 virastar@0.22.1
 ```
 
@@ -128,3 +128,7 @@ The demo detects English/Persian automatically, explains partial results, and sp
 ### Alpha.3 review experience
 
 Persian normalization now yields independent source-anchored word or short phrase patches where alignment permits. The bounded diff verifies exact reconstruction and rejects the full normalization if any patch is unsafe. The demo no longer has language sample buttons; each original and replacement is rendered in an isolated direction, with explanatory text separate. Isolated uppercase alphanumeric tokens such as `ABC999` can be protected while the surrounding synthetic prose is reviewed. Ambiguous input still fails closed. This is a limited demo heuristic, not a production parser or an authorization decision. No npm registry publication or automatic Apply.
+
+### Alpha.4 formal Persian spelling
+
+The default Virastar adapter composes its restricted upstream normalizer with a small local formal-writing allowlist (e.g. لطفا → لطفاً, حتما → حتماً). Only exact unmarked words are eligible; ordinary final-alef words and already marked words are not changed by this policy. Suggestions remain review-only, within authoritative prose ranges. This is not general Persian spelling or diacritization.

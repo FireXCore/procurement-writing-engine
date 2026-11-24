@@ -1,7 +1,7 @@
 name: CI
 on:
   push:
-    branches: [main, 'dev/alpha-3-acceptance']
+    branches: [main, 'dev/alpha-4-acceptance']
   pull_request:
   workflow_dispatch:
 permissions:
@@ -55,7 +55,7 @@ jobs:
           retention-days: 14
 
   release-alpha:
-    name: Publish verified GitHub alpha.3
+    name: Publish verified GitHub alpha.4
     needs: [contract, upstream-and-browser]
     if: github.repository == 'FireXCore/procurement-writing-engine' && github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
@@ -75,19 +75,19 @@ jobs:
           path: release-artifacts
       - name: Pack verified source
         run: |
-          test "$(node -p 'require("./package.json").version')" = "0.1.0-alpha.3"
+          test "$(node -p 'require("./package.json").version')" = "0.1.0-alpha.4"
           test "$(node -p 'require("./package.json").private')" = "true"
           npm run release:check
           npm pack --ignore-scripts --pack-destination release-artifacts
           cd release-artifacts
           test -s dependencies.cdx.json
-          sha256sum procurement-writing-engine-0.1.0-alpha.3.tgz dependencies.cdx.json > SHA256SUMS.txt
+          sha256sum procurement-writing-engine-0.1.0-alpha.4.tgz dependencies.cdx.json > SHA256SUMS.txt
       - name: Publish immutable prerelease once
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          tag=v0.1.0-alpha.3
+          tag=v0.1.0-alpha.4
           test "$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq .object.sha)" = "$GITHUB_SHA"
           if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             echo "Existing release retained; never overwrite."
@@ -99,4 +99,4 @@ jobs:
           else
             test "$?" -eq 2
           fi
-          gh release create "$tag" release-artifacts/procurement-writing-engine-0.1.0-alpha.3.tgz release-artifacts/SHA256SUMS.txt release-artifacts/dependencies.cdx.json --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease --title "Procurement Writing Engine $tag" --notes-file docs/RELEASE_NOTES.md
+          gh release create "$tag" release-artifacts/procurement-writing-engine-0.1.0-alpha.4.tgz release-artifacts/SHA256SUMS.txt release-artifacts/dependencies.cdx.json --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease --title "Procurement Writing Engine $tag" --notes-file docs/RELEASE_NOTES.md
