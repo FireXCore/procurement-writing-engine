@@ -1,8 +1,8 @@
 {
   "name": "procurement-writing-engine",
-  "version": "0.1.0-alpha.5",
+  "version": "0.1.0-alpha.6",
   "description": "Composable English and Persian writing review for procurement and technical commercial prose. No LLM required.",
-  "private": true,
+  "private": false,
   "type": "module",
   "license": "MIT",
   "engines": {
@@ -95,5 +95,10 @@
     "typescript": "5.9.3",
     "vite": "8.3.8",
     "playwright-core": "1.58.2"
+  },
+  "publishConfig": {
+    "access": "public",
+    "tag": "alpha",
+    "registry": "https://registry.npmjs.org/"
   }
 }

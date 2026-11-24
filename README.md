@@ -38,14 +38,23 @@ The default recommended deployment profile is Harper for English and Virastar fo
 
 ## Installation from a verified GitHub release
 
-After the required CI gates pass and a prerelease appears on [GitHub Releases](https://github.com/FireXCore/procurement-writing-engine/releases), download the alpha tarball and `SHA256SUMS.txt`, verify the checksum, then install the local file. Public source alone does not indicate that a release artifact has passed qualification. The package is not published to the npm registry.
+After the required CI gates pass and a prerelease appears on [GitHub Releases](https://github.com/FireXCore/procurement-writing-engine/releases), download the alpha tarball and `SHA256SUMS.txt`, verify the checksum, then install the local file. Public source alone does not indicate that a release artifact has passed qualification. Registry distribution is prepared separately; check the npm package page for actual availability. Use only the alpha dist-tag, not a stable release claim.
 
 ```sh
-npm install ./procurement-writing-engine-0.1.0-alpha.4.tgz
+npm install ./procurement-writing-engine-0.1.0-alpha.6.tgz
 npm install --save-exact harper.js@3.2.0 virastar@0.22.1
 ```
 
 Install the Textlint peer packages only when using that provider. Optional Node services are installed separately and must be qualified by the host.
+
+## Registry installation (after publication)
+
+```sh
+npm install procurement-writing-engine@alpha
+npm install --save-exact harper.js@3.2.0 virastar@0.22.1
+```
+
+[Registry package](https://www.npmjs.com/package/procurement-writing-engine) · [Browser demo](https://procurement-writing-engine.vercel.app/). The registry link is not a publication receipt.
 
 ## Run the local contract suite
 
@@ -70,7 +79,7 @@ See [release gates](docs/RELEASE.md) for external services and browser/domain qu
 
 ```js
 import { binaryInlined } from 'harper.js/binaryInlined';
-import { createEngine, createHarper, createVirastar } from './src/index.mjs';
+import { createEngine, createHarper, createVirastar } from 'procurement-writing-engine';
 
 // Node evaluation uses LocalLinter. A qualified browser host should own/terminate a Worker.
 const harper = await createHarper({ binary: binaryInlined, worker: false });

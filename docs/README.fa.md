@@ -18,3 +18,12 @@ npm run demo
 ```
 
 فقط با داده مصنوعی آزمایش کنید. وضعیت تست‌های اجراشده و محدودیت‌ها در [گزارش اعتبارسنجی](LOCAL_VERIFICATION.md) و [فرایند انتشار](RELEASE.md) آمده است. [معماری](ARCHITECTURE.md)، [قرارداد API](API.md)، [امنیت](../SECURITY.md) و [مجوز اجزا](../THIRD_PARTY.md) را قبل از استفاده مطالعه کنید.
+
+## نصب از npm پس از انتشار تأییدشده
+
+```sh
+npm install procurement-writing-engine@alpha
+npm install --save-exact harper.js@3.2.0 virastar@0.22.1
+```
+
+[وضعیت بسته در npm](https://www.npmjs.com/package/procurement-writing-engine) · [دموی عمومی](https://procurement-writing-engine.vercel.app/). انتشار آلفا مجوز استفاده عملیاتی نیست.

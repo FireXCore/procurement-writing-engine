@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.0-alpha.6 — public registry packaging
+
+- Packaging-only successor to the human-tested alpha.5; no engine, provider, parser or demo logic changes.
+- Explicit public alpha tag, fresh-consumer tarball smoke test and gated npm staging workflow.
+- The immutable alpha.5 GitHub release remains unchanged. Registry availability requires successful release and npm approval.
+
 ## 0.1.0-alpha.5 — contextual review
 
 - Rank existing spelling alternatives with bounded procurement phrase context.

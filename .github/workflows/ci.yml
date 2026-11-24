@@ -44,6 +44,34 @@ jobs:
       - run: npm run test:browser
       - run: npm audit --audit-level=high
       - run: npm run release:check
+      - name: Install packed SDK in clean consumer
+        shell: bash
+        run: |
+          set -euo pipefail
+          tmp=$(mktemp -d)
+          npm pack --ignore-scripts --pack-destination "$tmp"
+          cd "$tmp"
+          npm init -y >/dev/null
+          npm install --ignore-scripts --no-audit --no-fund "./procurement-writing-engine-0.1.0-alpha.6.tgz" harper.js@3.2.0 virastar@0.22.1
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {binaryInlined} from 'harper.js/binaryInlined';
+          import {createEngine,createHarper,createVirastar} from 'procurement-writing-engine';
+          import {createLocalLanguageTool} from 'procurement-writing-engine/node';
+          assert.equal(typeof createLocalLanguageTool,'function');
+          const harper=await createHarper({binary:binaryInlined,worker:false});
+          try {
+            const engine=createEngine([harper.provider,await createVirastar()]);
+            const prose='Please send teh quotation for ';
+            const technical='ABC999';
+            const text=prose+technical;
+            const r=await engine.analyze({text,snapshotId:'npm-smoke',regions:[{start:0,end:prose.length,kind:'prose',language:'en'},{start:prose.length,end:text.length,kind:'protected'}]});
+            assert.equal(r.status,'complete');
+            assert.equal(r.apply,false);
+            assert.ok(r.findings.some(x=>x.original==='teh'&&x.replacement==='the'));
+            assert.ok(r.findings.every(x=>x.end<=prose.length || x.range?.end<=prose.length));
+          } finally {await harper.dispose();}
+          JS
       - name: Dependency inventory
         run: |
           mkdir -p release-artifacts
@@ -55,7 +83,7 @@ jobs:
           retention-days: 14
 
   release-alpha:
-    name: Publish verified GitHub alpha.5
+    name: Publish verified GitHub alpha.6
     needs: [contract, upstream-and-browser]
     if: github.repository == 'FireXCore/procurement-writing-engine' && github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
@@ -75,19 +103,19 @@ jobs:
           path: release-artifacts
       - name: Pack verified source
         run: |
-          test "$(node -p 'require("./package.json").version')" = "0.1.0-alpha.5"
-          test "$(node -p 'require("./package.json").private')" = "true"
+          test "$(node -p 'require("./package.json").version')" = "0.1.0-alpha.6"
+          test "$(node -p 'require("./package.json").private')" = "false"
           npm run release:check
           npm pack --ignore-scripts --pack-destination release-artifacts
           cd release-artifacts
           test -s dependencies.cdx.json
-          sha256sum procurement-writing-engine-0.1.0-alpha.5.tgz dependencies.cdx.json > SHA256SUMS.txt
+          sha256sum procurement-writing-engine-0.1.0-alpha.6.tgz dependencies.cdx.json > SHA256SUMS.txt
       - name: Publish immutable prerelease once
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          tag=v0.1.0-alpha.5
+          tag=v0.1.0-alpha.6
           test "$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq .object.sha)" = "$GITHUB_SHA"
           if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             echo "Existing release retained; never overwrite."
@@ -99,4 +127,4 @@ jobs:
           else
             test "$?" -eq 2
           fi
-          gh release create "$tag" release-artifacts/procurement-writing-engine-0.1.0-alpha.5.tgz release-artifacts/SHA256SUMS.txt release-artifacts/dependencies.cdx.json --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease --title "Procurement Writing Engine $tag" --notes-file docs/RELEASE_NOTES.md
+          gh release create "$tag" release-artifacts/procurement-writing-engine-0.1.0-alpha.6.tgz release-artifacts/SHA256SUMS.txt release-artifacts/dependencies.cdx.json --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease --title "Procurement Writing Engine $tag" --notes-file docs/RELEASE_NOTES.md

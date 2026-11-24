@@ -1,3 +1,3 @@
-# Procurement Writing Engine 0.1.0-alpha.5
+# Procurement Writing Engine 0.1.0-alpha.6
 
-Review-only candidate: contextual phrase ranking of existing Harper alternatives, grouped demo issues, separated Persian/English runs, case-preserving identifier isolation, and limited ASTM grade recognition. Host-owned authoritative maps and core validation remain unchanged. Ambiguous tokens remain protected; no claim of general industrial parsing or semantic correctness. npm publishing remains disabled until human acceptance.
+Packaging-only public-distribution candidate based on human-tested alpha.5. No engine, provider, parser or demo changes. Public npm metadata, fresh-consumer installation checks and separate authenticated staging workflow. Review-only; no production qualification. Registry publication requires maintainer approval and successful CI.

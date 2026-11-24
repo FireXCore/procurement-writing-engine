@@ -1,0 +1,45 @@
+name: Stage verified alpha on npm
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: npm-alpha-publication
+  cancel-in-progress: false
+jobs:
+  stage:
+    if: github.repository == 'FireXCore/procurement-writing-engine' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+          package-manager-cache: false
+      - name: Verify release artifact and stage
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          version=$(node -p 'require("./package.json").version')
+          [[ "$version" =~ ^0\.1\.0-alpha\.[0-9]+$ ]]
+          tag="v$version"
+          test "$(git ls-remote --tags origin "refs/tags/$tag" | cut -f1)" = "$GITHUB_SHA"
+          test "$(gh release view "$tag" --json isDraft,isPrerelease --jq '.isDraft == false and .isPrerelease == true')" = true
+          tmp=$(mktemp -d)
+          artifact="procurement-writing-engine-$version.tgz"
+          gh release download "$tag" --pattern "$artifact" --pattern SHA256SUMS.txt --pattern dependencies.cdx.json --dir "$tmp"
+          cd "$tmp"
+          sha256sum --check SHA256SUMS.txt
+          tar -xOf "$artifact" package/package.json > manifest.json
+          VERSION="$version" node -e 'const p=require("./manifest.json"); if(p.name!=="procurement-writing-engine"||p.version!==process.env.VERSION||p.private!==false||p.publishConfig?.tag!=="alpha"||p.publishConfig?.access!=="public"||p.publishConfig?.registry!=="https://registry.npmjs.org/")process.exit(1)'
+          node -e 'const [a,b]=process.argv[1].split(".").map(Number);if(a<11||(a===11&&b<15))throw Error("npm 11.15+ required for staging")' "$(npm --version)"
+          npm stage publish "./$artifact" --access public --tag alpha --ignore-scripts --registry https://registry.npmjs.org/

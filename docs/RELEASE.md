@@ -1,8 +1,8 @@
 # Alpha release workflow
 
-The source bundle is not a published release. The existing public FireXCore repository uses the CI workflow below to publish the alpha.4 prerelease only after all required jobs succeed. The Windows script is an alternative for a fresh, privately staged repository; do not run both publication mechanisms for the same tag. The maintainer script creates a **private staging repository first**, tests the actual locked JS packages, checks security and package manifests, waits for GitHub CI for the exact commit, creates a GitHub prerelease, and finally changes repository visibility to public. It never publishes to npm, never force-pushes, and never changes another repository.
+The source bundle is not a published release. The existing public FireXCore repository uses the CI workflow below to publish the alpha.6 prerelease only after all required jobs succeed. The Windows bootstrap script is historical and requires private package metadata; do not run it for alpha.6 or later. Use CI instead. The maintainer script creates a **private staging repository first**, tests the actual locked JS packages, checks security and package manifests, waits for GitHub CI for the exact commit, creates a GitHub prerelease, and finally changes repository visibility to public. It never publishes to npm, never force-pushes, and never changes another repository.
 
-## Windows maintainer bootstrap
+## Historical Windows maintainer bootstrap (not for alpha.6)
 
 Prerequisites: Git, GitHub CLI authenticated to the intended owner, Node.js >=22.12, npm, and installed Chrome/Edge (or `PWE_CHROME` with an explicit path). Registry and GitHub access required. Git user identity must already be configured. Extract outside another Git checkout and inspect all source before publishing.
 
@@ -35,4 +35,8 @@ Production requires a versioned synthetic domain evaluation corpus, accepted acc
 
 ## Existing public repository release automation
 
-The CI workflow's final job is restricted to the canonical repository, main, a successful push or explicit workflow dispatch, and the explicit alpha.4 version. It checks the current main SHA, refuses existing tags, generates a tarball and checksum, downloads the dependency inventory from the same CI run, and creates a GitHub prerelease. No npm publish or external deployment occurs. The release job alone has contents-write permission. No release is created if a required upstream, browser, audit or contract job fails.
+The CI workflow's final job is restricted to the canonical repository, main, a successful push or explicit workflow dispatch, and the explicit alpha.6 version. It checks the current main SHA, refuses existing tags, generates a tarball and checksum, downloads the dependency inventory from the same CI run, and creates a GitHub prerelease. This CI job does not publish to npm or deploy externally. The release job alone has contents-write permission. No release is created if a required upstream, browser, audit or contract job fails.
+
+## Public npm distribution
+
+Alpha.6 changes packaging metadata only; the tested alpha.5 engine is unchanged. Never replace the existing alpha.5 artifact. After the alpha.6 GitHub release passes CI, download the tarball and SHA256SUMS.txt from that release and verify its SHA-256. For a new package, the maintainer must authenticate to npm (2FA enabled) and publish the exact verified tarball with `npm publish ./procurement-writing-engine-0.1.0-alpha.6.tgz --access public --tag alpha --ignore-scripts` or stage and approve it with npm CLI 11.15+; never share credentials. After the package exists, configure a GitHub Actions trusted publisher: owner FireXCore, repository procurement-writing-engine, filename npm-publish.yml, allowed action stage publish. Run the workflow manually on main; it refuses a commit without a matching GitHub release tag. Review and approve staged versions in npmjs.com with 2FA. No permanent token, automatic Apply, stable tag or production deployment.
