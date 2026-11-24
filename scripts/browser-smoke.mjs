@@ -20,6 +20,8 @@ try{
   const external=[];await context.route('**/*',route=>{const url=new URL(route.request().url());if(url.protocol==='data:'||url.protocol==='blob:'||url.origin===origin)return route.continue();external.push(url.origin);return route.abort();});
   const page=await context.newPage();
   await page.goto(origin);
+  const pkg=JSON.parse(await readFile(new URL('../package.json',import.meta.url),'utf8'));
+  assert.equal(await page.locator('#demo-version').innerText(),pkg.version+' · LOCAL DEMO','Demo version must match package.json');
   await page.locator('#run').click();
   await page.waitForFunction(()=>['complete','error'].includes(document.documentElement.dataset.review),{},{timeout:90000});
   assert.equal(await page.locator('html').getAttribute('data-review'),'complete');

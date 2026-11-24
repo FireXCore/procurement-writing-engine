@@ -1,2 +1,10 @@
 import {defineConfig} from 'vite';
-export default defineConfig({worker:{format:'es'},build:{target:'es2022'}});
+import pkg from '../package.json';
+export default defineConfig({
+  plugins:[{
+    name:'pwe-demo-version',
+    transformIndexHtml(html){return html.replace('__PWE_VERSION__',pkg.version);}
+  }],
+  worker:{format:'es'},
+  build:{target:'es2022'}
+});
