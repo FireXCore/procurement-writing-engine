@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="180" viewBox="0 0 800 180" role="img" aria-labelledby="title">
+<title id="title">Procurement Writing Engine</title>
+<rect x="20" y="26" width="128" height="128" rx="27" fill="#142A35"/>
+<g transform="translate(20 26)"><path d="M31 29h41l24 24v46H31z" fill="none" stroke="#F3F5F2" stroke-width="7" stroke-linejoin="round"/><path d="M72 29v24h24M45 59h19M45 72h14" stroke="#F3F5F2" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="m58 88 12 12 32-35" stroke="#55D8AC" stroke-width="9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>
+<text x="175" y="79" font-family="Inter,DejaVu Sans,Arial,sans-serif" font-weight="700" font-size="39" fill="#18313D">Procurement</text>
+<text x="175" y="126" font-family="Inter,DejaVu Sans,Arial,sans-serif" font-weight="700" font-size="39" fill="#18313D">Writing Engine</text>
+<path d="M710 43v94" stroke="#C7D6D1" stroke-width="1"/><text x="737" y="98" font-family="DejaVu Sans,Arial,sans-serif" font-size="14" font-weight="700" fill="#367A68" text-anchor="middle">PWE</text>
+</svg>
