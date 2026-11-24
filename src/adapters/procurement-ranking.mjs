@@ -23,7 +23,8 @@ export function rankSpellingAlternatives(proposals,source){
     const pos=before.length;
     let score=vocabulary.has(candidate)?1:0;
     for(let width=2;width<=3;width++)for(let i=Math.max(0,pos-width+1);i<=pos&&i+width<=joined.length;i++){
-      if(contexts.has(joined.slice(i,i+width).join(' ')))score+=width*4;
+      const phrase=joined.slice(i,i+width).join(' ');
+      if(contexts.has(phrase))score+=phrase.startsWith('please ')?width*2:width*4;
     }
     return {proposal,index,score};
   }).sort((a,b)=>b.score-a.score||a.index-b.index).map(x=>x.proposal);
