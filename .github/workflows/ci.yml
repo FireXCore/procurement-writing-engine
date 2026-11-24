@@ -51,7 +51,7 @@ jobs:
           tmp=$(mktemp -d)
           npm pack --ignore-scripts --pack-destination "$tmp"
           cd "$tmp"
-          npm init -y >/dev/null
+          printf '%s\n' '{"name":"pwe-consumer-smoke","version":"0.0.0","private":true,"type":"module"}' > package.json
           npm install --ignore-scripts --no-audit --no-fund "./procurement-writing-engine-0.1.0-alpha.6.tgz" harper.js@3.2.0 virastar@0.22.1
           node --input-type=module <<'JS'
           import assert from 'node:assert/strict';
@@ -69,17 +69,26 @@ jobs:
             assert.equal(r.status,'complete');
             assert.equal(r.apply,false);
             assert.ok(r.findings.some(x=>x.original==='teh'&&x.replacement==='the'));
-            assert.ok(r.findings.every(x=>x.end<=prose.length || x.range?.end<=prose.length));
+            assert.ok(r.findings.every(x=>x.start>=0&&x.end<=prose.length&&text.slice(x.start,x.end)===x.original));
+            const fa='لطفا مدارك فني را ارسال کنید.';
+            const f=await engine.analyze({text:fa,snapshotId:'npm-fa-smoke',regions:[{start:0,end:fa.length,kind:'prose',language:'fa'}]});
+            assert.equal(f.status,'complete');
+            assert.equal(f.apply,false);
+            assert.ok(f.findings.some(x=>x.original==='لطفا'&&x.replacement==='لطفاً'));
           } finally {await harper.dispose();}
           JS
+          mkdir -p "$GITHUB_WORKSPACE/release-artifacts"
+          cp procurement-writing-engine-0.1.0-alpha.6.tgz "$GITHUB_WORKSPACE/release-artifacts/"
       - name: Dependency inventory
         run: |
           mkdir -p release-artifacts
           npm sbom --sbom-format cyclonedx > release-artifacts/dependencies.cdx.json
       - uses: actions/upload-artifact@v4
         with:
-          name: dependency-inventory
-          path: release-artifacts/dependencies.cdx.json
+          name: verified-distribution
+          path: |
+            release-artifacts/dependencies.cdx.json
+            release-artifacts/procurement-writing-engine-0.1.0-alpha.6.tgz
           retention-days: 14
 
   release-alpha:
@@ -101,13 +110,13 @@ jobs:
         with:
           name: dependency-inventory
           path: release-artifacts
-      - name: Pack verified source
+      - name: Verify exact consumer-tested distribution
         run: |
           test "$(node -p 'require("./package.json").version')" = "0.1.0-alpha.6"
           test "$(node -p 'require("./package.json").private')" = "false"
           npm run release:check
-          npm pack --ignore-scripts --pack-destination release-artifacts
           cd release-artifacts
+          test -s procurement-writing-engine-0.1.0-alpha.6.tgz
           test -s dependencies.cdx.json
           sha256sum procurement-writing-engine-0.1.0-alpha.6.tgz dependencies.cdx.json > SHA256SUMS.txt
       - name: Publish immutable prerelease once
