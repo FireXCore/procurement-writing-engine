@@ -34,7 +34,7 @@ test('real textlint kernel + plaintext plugin + procurement delivery advisory',a
 
 import { procurementPolicyRules, procurementAgreementRule } from '../src/index.mjs';
 import { buildDemoSnapshot } from '../demo/regions.mjs';
-import { cases, locked } from './acceptance-fixtures.mjs';
+import { cases, locked, extendedCases } from './acceptance-fixtures.mjs';
 
 test('real engines: all human acceptance examples and source protection', {timeout:120000}, async t=>{
   const {binaryInlined}=await import('harper.js/binaryInlined');
@@ -74,4 +74,23 @@ test('real Textlint limited agreement policy has no false positives on reviewed 
  for(const text of ['The suppliers have confirmed the quotation.','The goods are available.','The supplier has confirmed the quotation.','Please ask the supplier to have confirmed the quote.','The phrase "the supplier have confirmed" is quoted.']){
   const r=await createEngine([p]).analyze(snap(text,'en'));assert.equal(r.status,'complete');assert.deepEqual(r.findings,[],text);
  }
+});
+
+test('real engines: mixed languages, lower-case identifiers and contextual first choice',{timeout:120000},async t=>{
+ const {binaryInlined}=await import('harper.js/binaryInlined');
+ const harper=await createHarper({binary:binaryInlined,worker:false});
+ try{
+  const virastar=await createVirastar(),policy=await createTextlint(procurementPolicyRules);
+  for(const c of extendedCases)await t.test(c.id,async()=>{
+   const p=buildDemoSnapshot(c.text,locked,c.id);assert.deepEqual(p.languages,c.languages);
+   const calls=[];
+   const providers=[harper.provider,virastar,policy].map(provider=>({...provider,check:(text,lang,signal)=>{calls.push(text);return provider.check(text,lang,signal);}}));
+   const report=await createEngine(providers).analyze(p.document);
+   assert.equal(report.apply,false);assert.ok(['complete','partial'].includes(report.status));
+   for(const text of calls)for(const token of [...(c.protected??[]),locked])assert.ok(!text.includes(token),token);
+   for(const [original,replacement] of c.pairs)assert.ok(report.findings.some(f=>f.original===original&&f.replacement===replacement),JSON.stringify(report));
+   if(c.first)assert.equal(report.findings.find(f=>f.original===c.first[0])?.replacement,c.first[1]);
+   if(c.clean){assert.equal(report.status,'complete');assert.equal(report.findings.length,0);}
+  });
+ }finally{await harper.dispose();}
 });

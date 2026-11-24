@@ -16,3 +16,11 @@ export const cases=Object.freeze([
  {id:'fa-quantity',language:'fa',text:'لطفا قيمت ۲۵ عدد شیر صنعتی را اعلام كنيد.',expectedText:'لطفاً قیمت ۲۵ عدد شیر صنعتی را اعلام کنید.',pairs:[['لطفا','لطفاً']],protected:['۲۵ عدد'],browserNeed:'ک'},
  {id:'en-inferred-id',language:'en',text:'Please send teh quote for ABC999.',pairs:[['teh','the']],protected:['ABC999'],inferred:1}
 ]);
+
+export const extendedCases=Object.freeze([
+ {id:'mixed',text:'لطفا برای Rosemount 3051 teh quotation را ارسال کنید.',languages:['fa','en'],pairs:[['لطفا','لطفاً'],['teh','the']],protected:['Rosemount 3051']},
+ {id:'lowercase-id',text:'Please send teh quotation for abc999 and 7MF4433-1DA22-2AB1.',languages:['en'],pairs:[['teh','the']],protected:['abc999','7MF4433-1DA22-2AB1']},
+ {id:'standard',text:'Please provde 25 PCS of ASTM A216 WCB valves, DN50, PN16.',languages:['en'],pairs:[['provde','provide']],first:['provde','provide'],protected:['25 PCS','ASTM A216 WCB','DN50','PN16']},
+ {id:'new-english',text:'We have recieved your qoutation and will proced with the evaluation.',languages:['en'],pairs:[['recieved','received'],['qoutation','quotation'],['proced','proceed']],first:['proced','proceed']},
+ {id:'negation',text:'The goods are not available and the offer has not been approved.',languages:['en'],pairs:[],clean:true}
+]);

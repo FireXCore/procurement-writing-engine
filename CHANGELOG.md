@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.0-alpha.5 — contextual review
+
+- Rank existing spelling alternatives with bounded procurement phrase context.
+- Group competing alternatives in the demo without changing the SDK findings contract.
+- Review safely separated English/Persian runs and isolate bounded identifiers in either case.
+- Protect synthetic ASTM specifications and extend real provider/browser acceptance tests.
+
 ## 0.1.0-alpha.4 — formal Persian spelling
 
 - Add a bounded exact-word formal tanwin policy to the default Virastar adapter.

@@ -12,7 +12,14 @@ function reset(message='Ready for review. Language is detected automatically.'){
 prose.oninput=()=>reset();cancel.onclick=()=>reset('Review cancelled.');
 function finish(result,plan){
   const state=plan.skipped&&result.status==='complete'?'partial':result.status;
+  const groups=new Map();
   for(const f of result.findings){
+    const key=JSON.stringify([f.start,f.end,f.provider,f.rule,f.category]);
+    if(!groups.has(key))groups.set(key,[]);
+    groups.get(key).push(f);
+  }
+  for(const group of groups.values()){
+    const f=group[0];
     const language=plan.document.regions.find(r=>r.kind==='prose'&&f.start>=r.start&&f.end<=r.end)?.language;
     const item=document.createElement('li'),pair=document.createElement('div');
     item.dir='ltr';pair.className='finding-pair';pair.dir='ltr';
@@ -26,9 +33,23 @@ function finish(result,plan){
       pair.append(arrow,term(f.replacement,'replacement'));
     }
     const message=document.createElement('div');message.className='finding-message';message.dir='ltr';message.textContent=f.message+' ['+f.provider+']';
-    item.append(pair,message);findings.append(item);
+    item.append(pair,message);
+    if(group.length>1){
+      const alternatives=document.createElement('details');
+      const summary=document.createElement('summary');
+      summary.textContent=(group.length-1)+' alternative(s) — review only';
+      alternatives.append(summary);
+      for(const other of group.slice(1)){
+        if(other.replacement===undefined)continue;
+        const alternative=document.createElement('div');alternative.className='finding-pair';alternative.dir='ltr';
+        alternative.append(term(other.original,'original'),document.createTextNode(' → '),term(other.replacement,'replacement'));
+        alternatives.append(alternative);
+      }
+      item.append(alternatives);
+    }
+    findings.append(item);
   }
-  status.textContent=state+': '+result.findings.length+' review suggestion(s).';
+  status.textContent=state+': '+groups.size+' review issue(s); '+result.findings.length+' candidate(s).';
   const languages=plan.languages.map(x=>x==='fa'?'Persian':'English').join(', ')||'None';
   const reasons=[...new Set(result.diagnostics.map(x=>(labels[x.code]||'Reduced review coverage')+(x.provider?' ('+x.provider+')':'')))];
   details.textContent='Detected language: '+languages+'. Protected inline ranges: '+plan.inlineProtected+'. Inferred identifier ranges: '+plan.inferredProtected+'. Unclassified regions skipped: '+plan.skipped+'.'+(reasons.length?' '+reasons.join('; ')+'.':'')+(!plan.languages.length?' No eligible prose was reviewed.':'');

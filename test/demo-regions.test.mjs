@@ -17,7 +17,7 @@ for(const c of cases)test('demo region map: '+c.id,async()=>{
  for(const {text,lang} of calls){assert.equal(lang,c.language);for(const token of [...(c.protected??[]),locked])assert.ok(!text.includes(token));}
 });
 test('unknown technical and mixed-script input remain unreviewed',()=>{
- for(const text of ['Please send teh quote for abc999.','نامه ۱۲۳','سلام valve','please see api/v1','hello\u202Eworld']){
+ for(const text of ['نامه ۱۲۳','please see api/v1','hello\u202Eworld']){
   const p=buildDemoSnapshot(text,locked,'unknown');assert.equal(p.skipped,1,text);assert.deepEqual(p.languages,[]);assert.ok(p.document.regions.every(x=>x.kind==='protected'));
  }
 });
@@ -31,7 +31,7 @@ test('malformed or unaligned input remains fail closed',()=>{
 });
 
 test('isolated inferred identifier protects exactly its span and admits surrounding prose',()=>{
- for(const id of ['ABC999','AB-123','7MF4433-1DA22-2AB1','A1/B2']){
+ for(const id of ['ABC999','abc999','xABC999','AB-123','7MF4433-1DA22-2AB1','A1/B2']){
   const p=buildDemoSnapshot('Please send teh quote for '+id+'.',locked,'id');
   assert.equal(p.inferredProtected,1);assert.equal(p.inlineProtected,1);assert.equal(p.skipped,0);assert.deepEqual(p.languages,['en']);
   assert.ok(p.document.regions.some(r=>r.kind==='protected'&&p.document.text.slice(r.start,r.end)===id));
@@ -39,7 +39,27 @@ test('isolated inferred identifier protects exactly its span and admits surround
  }
 });
 test('ambiguous identifiers and mixed scripts still fail closed',()=>{
- for(const input of ['Please send teh quote for abc999.','Please send teh quote for xABC999.','Please send teh quote for ABC999@example.com.','Please send teh quote for ABC999_XX.','لطفا ABC999نام را بررسی کنید.']){
+ for(const input of ['Please send teh quote for ABC999@example.com.','Please send teh quote for ABC999_XX.','لطفا ABC999نام را بررسی کنید.']){
   const p=buildDemoSnapshot(input,locked,'ambiguous');assert.equal(p.skipped,1,input);assert.equal(p.inferredProtected,0,input);assert.deepEqual(p.languages,[],input);
+ }
+});
+
+test('mixed prose and technical standard remain source-bound and isolated',async()=>{
+ for(const [input,tokens,languages] of [
+  ['لطفا برای Rosemount 3051 teh quotation را ارسال کنید.',['Rosemount 3051'],['fa','en']],
+  ['Please send teh quotation for abc999 and 7MF4433-1DA22-2AB1.',['abc999','7MF4433-1DA22-2AB1'],['en']],
+  ['Please provde 25 PCS of ASTM A216 WCB valves, DN50, PN16.',['25 PCS','ASTM A216 WCB','DN50','PN16'],['en']]
+ ]){
+  const p=buildDemoSnapshot(input,locked,'new');assert.ok(validateDocument(p.document));
+  assert.deepEqual(p.languages,languages);
+  for(const token of tokens)assert.ok(p.document.regions.some(r=>r.kind==='protected'&&p.document.text.slice(r.start,r.end).includes(token)),token);
+  const calls=[];const engine=createEngine([{id:'fixture',languages:['en','fa'],check:(text,language)=>{calls.push({text,language});return [];}}]);
+  await engine.analyze(p.document);assert.ok(calls.length);
+  for(const {text} of calls)for(const token of tokens)assert.ok(!text.includes(token),token);
+ }
+});
+test('mixed attached tokens and unsafe URLs never become editable',()=>{
+ for(const text of ['سلامvalve','hello@example.com سلام','سلام abc999_XX','hello\u202eworld سلام']){
+  const p=buildDemoSnapshot(text,locked,'unsafe');assert.ok(p.skipped);assert.deepEqual(p.languages,[]);
  }
 });

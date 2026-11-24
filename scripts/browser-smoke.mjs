@@ -4,7 +4,7 @@ import { readFile,stat } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { resolve,sep,extname } from 'node:path';
 import assert from 'node:assert/strict';
-import {cases,locked} from '../test/acceptance-fixtures.mjs';
+import {cases,locked,extendedCases} from '../test/acceptance-fixtures.mjs';
 const root=resolve('dist/demo');
 const candidates=[process.env.PWE_CHROME,process.env.CHROME_PATH,process.env.CHROME_BIN,'/usr/bin/google-chrome','/usr/bin/chromium',process.env.ProgramFiles&&`${process.env.ProgramFiles}\\Google\\Chrome\\Application\\chrome.exe`,process.env['ProgramFiles(x86)']&&`${process.env['ProgramFiles(x86)']}\\Microsoft\\Edge\\Application\\msedge.exe`];
 const executablePath=candidates.find(p=>p&&existsSync(p));
@@ -61,10 +61,22 @@ try{
     for(const token of c.protected??[])assert.ok(!findings.includes(token),c.id);
     console.log('Browser acceptance: '+c.id+' PASS');
   }
-  await page.locator('#prose').fill('Please send teh quote for abc999.');
-  await page.locator('#run').click();
-  assert.equal(await page.locator('html').getAttribute('data-analysis-status'),'partial');
-  assert.match(await page.locator('#details').innerText(),/Unclassified regions skipped: 1/);
+  for(const c of extendedCases){
+    await page.locator('#prose').fill(c.text);await page.locator('#run').click();
+    await page.waitForFunction(()=>['complete','error'].includes(document.documentElement.dataset.review),{},{timeout:90000});
+    assert.equal(await page.locator('html').getAttribute('data-review'),'complete',c.id);
+    const pairs=await page.locator('#findings .finding-pair').allTextContents();
+    const details=await page.locator('#details').innerText();
+    for(const language of c.languages)assert.ok(details.includes(language==='fa'?'Persian':'English'),details);
+    for(const [original,replacement] of c.pairs)assert.ok(pairs.includes(original+' → '+replacement),c.id+' '+pairs);
+    if(c.first)assert.equal(pairs.find(x=>x.startsWith(c.first[0]+' → ')),c.first.join(' → '));
+    if(c.clean)assert.equal(pairs.length,0,c.id);
+    if(c.id==='standard')assert.equal(await page.locator('#findings li').count(),1);
+    for(const token of c.protected??[])assert.ok(!pairs.some(x=>x.includes(token)),token);
+    assert.equal(await page.locator('#prose').inputValue(),c.text);
+    assert.equal(await page.locator('#protected').innerText(),locked);
+    console.log('Browser extended acceptance: '+c.id+' PASS');
+  }
   await page.locator('#prose').fill('Please send teh quotation.');await page.locator('#run').click();await page.locator('#cancel').click();
   assert.equal(await page.locator('html').getAttribute('data-review'),'idle');
   assert.equal(await page.locator('#findings li').count(),0);

@@ -1,5 +1,3 @@
-# Procurement Writing Engine 0.1.0-alpha.4
+# Procurement Writing Engine 0.1.0-alpha.5
 
-Fix the human-reported formal Persian spelling omission لطفا → لطفاً. The default Virastar adapter composes a small exact-word local formal-writing allowlist with upstream normalization, without changing upstream options. Already marked and unrelated words remain unchanged by the new policy. All Alpha.3 regressions remain required, including protected ranges, independent patches and isolated RTL/LTR display.
-
-GitHub prerelease only; npm publication remains disabled pending final acceptance. No general Persian spelling/diacritization guarantee, no automatic Apply, no new dependency, no production qualification.
+Review-only candidate: contextual phrase ranking of existing Harper alternatives, grouped demo issues, separated Persian/English runs, case-preserving identifier isolation, and limited ASTM grade recognition. Host-owned authoritative maps and core validation remain unchanged. Ambiguous tokens remain protected; no claim of general industrial parsing or semantic correctness. npm publishing remains disabled until human acceptance.

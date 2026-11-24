@@ -1,12 +1,7 @@
 import { validRange } from '../regions.mjs';
 const category = kind => ['Spelling','Typo'].includes(kind) ? 'spelling' : ['Grammar','Agreement','WordOrder'].includes(kind) ? 'grammar' : 'style';
 
-// A small, reviewed procurement vocabulary only ranks suggestions already returned by Harper.
-const preferredTerms = new Set(['quotation','supplier','equipment','procurement','purchase','delivery','availability','manufacturer','inspection','certificate','commercial','technical','invoice','shipment','warranty','material','quantity']);
-function rankSpellingAlternatives(proposals) {
-  const score = p => preferredTerms.has(p.replacement?.toLowerCase()) ? 1 : 0;
-  return proposals.sort((a,b)=>score(b)-score(a));
-}
+import { rankSpellingAlternatives } from './procurement-ranking.mjs';
 
 export function harperAdapter(linter) {
   if (!linter || typeof linter.organizedLints !== 'function') throw new TypeError('Harper linter required');
@@ -29,7 +24,7 @@ export function harperAdapter(linter) {
             if (kind === 0 || kind === 1) alternatives.push({...common,replacement:s.get_replacement_text()});
             else if (kind === 2) alternatives.push({...common,replacement:common.original+s.get_replacement_text()});
           }
-          output.push(...(common.category==='spelling'?rankSpellingAlternatives(alternatives):alternatives));
+          output.push(...(common.category==='spelling'?rankSpellingAlternatives(alternatives,text):alternatives));
         } finally {
           for (const s of suggestions) s.free?.();
           span?.free?.(); lint.free?.();
