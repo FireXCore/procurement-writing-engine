@@ -41,7 +41,7 @@ The default recommended deployment profile is Harper for English and Virastar fo
 After the required CI gates pass and a prerelease appears on [GitHub Releases](https://github.com/FireXCore/procurement-writing-engine/releases), download the alpha tarball and `SHA256SUMS.txt`, verify the checksum, then install the local file. Public source alone does not indicate that a release artifact has passed qualification. The package is not published to the npm registry.
 
 ```sh
-npm install ./procurement-writing-engine-0.1.0-alpha.1.tgz
+npm install ./procurement-writing-engine-0.1.0-alpha.2.tgz
 npm install --save-exact harper.js@3.2.0 virastar@0.22.1
 ```
 
@@ -120,3 +120,7 @@ Run `npm run demo` after installing locked dependencies. The demo uses actual lo
 [Architecture](docs/ARCHITECTURE.md) · [API](docs/API.md) · [Release process](docs/RELEASE.md) · [Contributing](CONTRIBUTING.md) · [Changelog](CHANGELOG.md)
 
 ![Repository social preview](assets/social-preview.png)
+
+### Alpha.2 acceptance changes
+
+The demo detects English/Persian automatically, explains partial results, and splits a limited set of synthetic technical patterns into protected ranges. This demo classifier is **not** a production parser. The library's host-authoritative region map remains mandatory. Harper alternatives retain upstream order except for a small reviewed procurement vocabulary preference. `procurementPolicyRules` adds narrow subject/verb agreement policies for selected procurement phrases and context-sensitive deadline advisories, not general grammar coverage. No automatic apply or npm publication.

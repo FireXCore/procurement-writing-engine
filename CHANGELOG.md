@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.0-alpha.2 — acceptance corrections
+
+- Automatic demo language selection and explicit partial-result reasons.
+- Conservative synthetic technical range separation; unchanged host authorization and protected-region validation.
+- Stable provider alternatives with reviewed procurement vocabulary preference.
+- Limited Textlint subject/verb policies and context-aware response/delivery deadline messages.
+- Regression coverage for all eleven reported acceptance inputs.
+
 ## 0.1.0-alpha.1 — initial public release candidate
 
 - Independent, review-only provider composition for English and Persian procurement prose.

@@ -77,27 +77,31 @@ export function createEngine(providers) {
           const raw = checked.value;
           if (!Array.isArray(raw)) { partial = true; diagnostics.push({code:'invalid-provider-result',provider:p.id}); continue; }
           if (raw.length > LIMITS.providerFindings) { partial = true; diagnostics.push({code:'provider-limit',provider:p.id}); }
+          let rejected = false, limited = false;
           for (const f of raw.slice(0,LIMITS.providerFindings)) {
             if (!f || typeof f.rule !== 'string' || !ruleId.test(f.rule) || !categories.has(f.category) ||
                 !validRange(source,f.start,f.end,b) || source.slice(f.start,f.end) !== f.original ||
                 !plainMessage(f.message) || (f.replacement === undefined && f.start === f.end)) {
-              partial = true; continue;
+              partial = true; rejected = true; continue;
             }
             // Inserts on a protected-region boundary are rejected; do not guess where they belong.
-            if (f.start === f.end && (f.start === 0 || f.start === source.length)) { partial = true; continue; }
-            if (f.replacement !== undefined && !validReplacement(f.original,f.replacement,region.language)) { partial = true; continue; }
+            if (f.start === f.end && (f.start === 0 || f.start === source.length)) { partial = true; rejected = true; continue; }
+            if (f.replacement !== undefined && !validReplacement(f.original,f.replacement,region.language)) { partial = true; rejected = true; continue; }
             const start = region.start + f.start, end = region.start + f.end;
             const key = JSON.stringify([p.id,f.rule,start,end,f.replacement ?? null]);
             if (seen.has(key)) continue;
             seen.add(key);
-            if (findings.length >= LIMITS.findings) { partial = true; continue; }
+            if (findings.length >= LIMITS.findings) { partial = true; limited = true; continue; }
             findings.push({provider:p.id, rule:f.rule, category:f.category, start,end,original:f.original,
               ...(f.replacement === undefined ? {} : {replacement:f.replacement}), message:f.message});
           }
+          if (rejected) diagnostics.push({code:'rejected-finding',provider:p.id,start:region.start});
+          if (limited) diagnostics.push({code:'finding-limit',provider:p.id,start:region.start});
         }
       }
       if (signal?.aborted) return report(snapshotId,'cancelled',[],[]);
-      findings.sort((a,b) => a.start-b.start || a.end-b.end || by(a.provider,b.provider) || by(a.rule,b.rule) || by(a.replacement??'',b.replacement??''));
+      // Stable sort: do not alphabetize competing replacements from the same rule.
+      findings.sort((a,b) => a.start-b.start || a.end-b.end || by(a.provider,b.provider) || by(a.rule,b.rule));
       return report(snapshotId,partial?'partial':'complete',findings,diagnostics);
     } finally { running = false; }
   }});

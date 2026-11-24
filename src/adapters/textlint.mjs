@@ -13,7 +13,7 @@ export function textlintAdapter(kernel, options) {
       if (!m.ruleId || m.fatal || typeof m.message !== 'string') continue;
       if (Array.isArray(m.fix?.range) && m.fix.range.length === 2 && typeof m.fix.text === 'string') {
         const [start,end]=m.fix.range;
-        if (validRange(text,start,end)) output.push({start,end,original:text.slice(start,end),replacement:m.fix.text,rule:m.ruleId,category:'style',message:m.message});
+        if (validRange(text,start,end)) output.push({start,end,original:text.slice(start,end),replacement:m.fix.text,rule:m.ruleId,category:m.ruleId==='procurement-agreement'?'grammar':'style',message:m.message});
       }
       else if (Array.isArray(m.range) && m.range.length===2 && validRange(text,...m.range) && m.range[0]<m.range[1]) {
         const [start,end]=m.range;

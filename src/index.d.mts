@@ -23,6 +23,8 @@ export interface TextlintPlugin { pluginId:string; plugin:unknown; options?:unkn
 export function textlintAdapter(kernel:{lintText(text:string,options:any):Promise<unknown>},options:{rules:readonly TextlintRule[];plugins:readonly TextlintPlugin[]}):Provider;
 export function createTextlint(rules:readonly TextlintRule[]):Promise<Provider>;
 export const procurementDeliveryRule:TextlintRule;
+export const procurementAgreementRule:TextlintRule;
+export const procurementPolicyRules:readonly TextlintRule[];
 export function languageToolAdapter(check:(text:string,language:Language,signal?:AbortSignal)=>Promise<unknown>):Provider;
 export function ste100Adapter(check:(text:string,signal?:AbortSignal)=>Promise<unknown>):Provider;
 export function valeAdapter(check:(text:string,signal?:AbortSignal)=>Promise<unknown>):Provider;

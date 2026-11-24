@@ -16,3 +16,5 @@ Findings expose `provider`, `rule`, `category`, `start`, `end`, `original`, opti
 - Lower-level adapters accept trusted upstream objects/callbacks and do not sandbox those providers.
 
 Do not pass arbitrary paths, providers or rules supplied by users. Never display a stale report: verify live source, scope, record, field, permissions and edit revision in the host.
+
+`procurementPolicyRules` is the reviewed English procurement policy pack (deadline clarity plus narrow subject/verb agreement). `procurementAgreementRule` is individually selectable. The grammar coverage is deliberately restricted; it is not a general parser. Alternatives at identical offsets/provider/rule preserve provider ordering, with a reviewed vocabulary preference in the Harper adapter. Rejected findings now include bounded `rejected-finding` diagnostics. All regions still require host authority.

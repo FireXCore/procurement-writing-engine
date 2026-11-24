@@ -41,7 +41,7 @@ test('provider failure isolated; no exception content in diagnostics',async()=>{
  const e=createEngine([provider(()=>{throw Error('secret payload')},'broken'),provider(s=>[proposal(s,0,3)],'working')]);const r=await e.analyze(snap('teh'));assert.equal(r.status,'partial');assert.equal(r.findings.length,1);assert.equal(r.diagnostics[0].code,'provider-failed');assert.ok(!JSON.stringify(r).includes('secret payload'));
 });
 test('provider dedup, stable ordering and competing edits remain separate',async()=>{
- const text='teh';const a=proposal(text);const e=createEngine([provider(()=>[a,a,{...a,replacement:'tea'}],'b'),provider(()=>[a],'a')]);const r=await e.analyze(snap(text));assert.deepEqual(r.findings.map(f=>[f.provider,f.replacement]),[['a','the'],['b','tea'],['b','the']]);assert.equal(r.apply,false);
+ const text='teh';const a=proposal(text);const e=createEngine([provider(()=>[a,a,{...a,replacement:'tea'}],'b'),provider(()=>[a],'a')]);const r=await e.analyze(snap(text));assert.deepEqual(r.findings.map(f=>[f.provider,f.replacement]),[['a','the'],['b','the'],['b','tea']]);assert.equal(r.apply,false);
 });
 test('cancellation retires noncooperative engine, prevents stale results and concurrent requests',async()=>{
  let complete;const pending=new Promise(r=>{complete=r});const e=createEngine([provider(()=>pending)]);const ac=new AbortController();const first=e.analyze(snap('teh'),{signal:ac.signal});assert.equal((await e.analyze(snap('other'))).status,'busy');ac.abort();const r=await first;assert.equal(r.status,'cancelled');assert.deepEqual(r.findings,[]);complete([proposal('teh')]);assert.equal((await e.analyze(snap('teh'))).status,'blocked');
@@ -65,7 +65,7 @@ test('grapheme diff derives original source range without inventing a grammar ru
 });
 test('Harper adapter maps replace, remove, insert-after and frees WASM wrappers',async()=>{
  let frees=0;const free=()=>frees++;const lint={span:()=>({start:0,end:3,free}),get_problem_text:()=> 'teh',lint_kind:()=> 'Spelling',message:()=> 'Review spelling.',suggestions:()=>[{kind:()=>0,get_replacement_text:()=> 'the',free},{kind:()=>1,get_replacement_text:()=>'',free},{kind:()=>2,get_replacement_text:()=> 're',free}],free};
- const e=createEngine([harperAdapter({organizedLints:async()=>({Spell:[lint]})})]);const r=await e.analyze(snap('teh'));assert.deepEqual(r.findings.map(x=>x.replacement),['','tehre','the']);assert.equal(frees,5);
+ const e=createEngine([harperAdapter({organizedLints:async()=>({Spell:[lint]})})]);const r=await e.analyze(snap('teh'));assert.deepEqual(r.findings.map(x=>x.replacement),['the','','tehre']);assert.equal(frees,5);
 });
 test('Virastar opts disable number/date normalization; experimental fork advisory only',async()=>{
  assert.equal(VIRASTAR_OPTIONS.fix_english_numbers,false);assert.equal(VIRASTAR_OPTIONS.normalize_dates,false);assert.equal(VIRASTAR_OPTIONS.fix_numeral_symbols,false);
@@ -95,4 +95,14 @@ test('external provider factories reject public or arbitrary destinations',()=>{
 test('property checks: every accepted proposal reconstructs only its source span',async()=>{
  let seed=17;const rng=()=>((seed=(seed*48271)%2147483647)/2147483647);
  for(let n=0;n<150;n++){const prefix='Please ',prose='send teh quotation',suffix=' now.',text=prefix+prose+suffix;const start=prefix.length,end=start+prose.length;const findings=Array.from({length:20},()=>{const s=Math.floor(rng()*(prose.length+5))-2,e=s+Math.floor(rng()*8);return {...proposal(prose,s,e,'the'),start:s,end:e};});const r=await createEngine([provider(()=>findings)]).analyze({text,snapshotId:`fuzz:${n}`,regions:[{start:0,end:start,kind:'protected'},{start,end,kind:'prose',language:'en'},{start:end,end:text.length,kind:'protected'}]});for(const f of r.findings){assert.ok(f.start>=start&&f.end<=end);assert.equal(f.original,text.slice(f.start,f.end));const edited=text.slice(0,f.start)+f.replacement+text.slice(f.end);assert.ok(edited.startsWith(prefix)&&edited.endsWith(suffix));}}
+});
+
+test('Harper ranks a reviewed procurement word ahead of unrelated alternatives without adding candidates',async()=>{
+ const lint={span:()=>({start:0,end:9}),get_problem_text:()=> 'quatation',lint_kind:()=> 'Spelling',message:()=> 'Review spelling.',suggestions:()=>['equitation','quotation','quotations'].map(word=>({kind:()=>0,get_replacement_text:()=>word}))};
+ const e=createEngine([harperAdapter({organizedLints:async()=>({Spell:[lint]})})]);const r=await e.analyze(snap('quatation'));assert.deepEqual(r.findings.map(x=>x.replacement),['quotation','equitation','quotations']);
+});
+test('rejected findings produce a bounded, non-sensitive diagnostic',async()=>{
+ const p=proposal('teh');
+ const r=await createEngine([provider(()=>[{...p,original:'invalid'},{...p,replacement:'123'},p])]).analyze(snap('teh'));
+ assert.equal(r.status,'partial');assert.equal(r.findings.length,1);assert.deepEqual(r.diagnostics,[{code:'rejected-finding',provider:'fixture',start:0}]);
 });
