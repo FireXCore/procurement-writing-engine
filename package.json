@@ -48,7 +48,7 @@
     "release:check": "node scripts/release-check.mjs"
   },
   "peerDependencies": {
-    "harper.js": "3.3.0",
+    "harper.js": "3.2.0",
     "virastar": "0.22.1",
     "@textlint/kernel": "16.1.3",
     "@textlint/textlint-plugin-text": "16.1.3"
@@ -88,7 +88,7 @@
     "writing-assistant"
   ],
   "devDependencies": {
-    "harper.js": "3.3.0",
+    "harper.js": "3.2.0",
     "virastar": "0.22.1",
     "@textlint/kernel": "16.1.3",
     "@textlint/textlint-plugin-text": "16.1.3",
