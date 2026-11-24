@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.0-alpha.7 — bilingual review coverage
+
+- Isolate bounded contact details, URLs, Windows paths, engineering standards, measurements and structured identifiers in the synthetic browser demo; unknown ranges remain fail-closed.
+- Extend narrow English procurement agreement and Persian formal orthography policies, including `پیش‌فاکتور`.
+- Report routed text units and add ten browser/real-provider regression fixtures while retaining the existing suite.
+- Keep host-owned region authorization, review-only findings, source offsets and existing dependencies unchanged.
+
 ## 0.1.0-alpha.6 — public registry packaging
 
 - Packaging-only successor to the human-tested alpha.5; no engine, provider, parser or demo logic changes.

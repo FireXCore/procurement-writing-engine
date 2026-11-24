@@ -41,7 +41,7 @@ The default recommended deployment profile is Harper for English and Virastar fo
 After the required CI gates pass and a prerelease appears on [GitHub Releases](https://github.com/FireXCore/procurement-writing-engine/releases), download the alpha tarball and `SHA256SUMS.txt`, verify the checksum, then install the local file. Public source alone does not indicate that a release artifact has passed qualification. Registry distribution is prepared separately; check the npm package page for actual availability. Use only the alpha dist-tag, not a stable release claim.
 
 ```sh
-npm install ./procurement-writing-engine-0.1.0-alpha.6.tgz
+npm install ./procurement-writing-engine-0.1.0-alpha.7.tgz
 npm install --save-exact harper.js@3.2.0 virastar@0.22.1
 ```
 
