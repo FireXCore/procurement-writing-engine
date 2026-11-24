@@ -38,11 +38,11 @@ The default recommended deployment profile is Harper for English and Virastar fo
 
 ## Installation from a verified GitHub release
 
-Download the alpha tarball and `SHA256SUMS.txt` from the actual GitHub Releases page, verify the checksum, then install the local file. The package is not published to the npm registry.
+After the required CI gates pass and a prerelease appears on [GitHub Releases](https://github.com/FireXCore/procurement-writing-engine/releases), download the alpha tarball and `SHA256SUMS.txt`, verify the checksum, then install the local file. Public source alone does not indicate that a release artifact has passed qualification. The package is not published to the npm registry.
 
 ```sh
 npm install ./procurement-writing-engine-0.1.0-alpha.1.tgz
-npm install --save-exact harper.js@3.3.0 virastar@0.22.1
+npm install --save-exact harper.js@3.2.0 virastar@0.22.1
 ```
 
 Install the Textlint peer packages only when using that provider. Optional Node services are installed separately and must be qualified by the host.

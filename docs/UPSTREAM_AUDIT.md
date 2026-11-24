@@ -45,3 +45,7 @@ Repository metadata and recursive trees for seven projects were inspected. Tree 
 ## Architectural decision
 
 A single modular library orchestrates adapters. Browser profile: Harper + Virastar, optional reviewed Textlint policy. Server/document QA profile: Vale and optional LanguageTool/STE100. Enable one primary grammar provider for a given locale by default; extra providers are deliberate audit profiles, not an unconditional cascade. Preserve each finding's source; conflicting suggestions are not automatically combined. No LLM, no auto-apply, no proprietary code or data.
+
+### Registry qualification addendum — 2026-11-24
+
+The GitHub v3.3.0 tag was reviewed, but npm returned ETARGET for harper.js@3.3.0. The registry's latest available version was 3.2.0. The v3.2.0 Linter.ts and WASM lib.rs have identical Git blob hashes to their v3.3.0 counterparts, and the package export and inline WASM entry point were checked at v3.2.0. The published dependency is pinned to 3.2.0, subject to actual upstream/browser CI. No parser was ported or replaced.

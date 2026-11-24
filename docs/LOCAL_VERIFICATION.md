@@ -18,3 +18,7 @@
 | GitHub public repo / release / npm publication / deployment | NOT PERFORMED |
 
 The included publishing script is intended to create a real lock and gate public alpha publication on actual local and GitHub CI. No synthetic or dry-run check substitutes for these gates. The optional service/production qualification remains separate. No actual private procurement records are included.
+
+## GitHub bootstrap evidence (2026-11-24)
+
+The public repository was created by the owner. The initial source candidate was transferred with Git blob checks. GitHub Actions resolved the registry-published Harper 3.2.0 and generated the genuine npm lockfile in [run 45367794766](https://github.com/FireXCore/procurement-writing-engine/actions/runs/45367794766); its dependency-free suite passed 26 tests, 0 failures, 0 skips. PNGs were regenerated from the supplied SVG assets in [run 45367618533](https://github.com/FireXCore/procurement-writing-engine/actions/runs/45367618533). These are bootstrap checks, not evidence of successful full upstream CI or production readiness. See the current CI and Releases pages for publication results.

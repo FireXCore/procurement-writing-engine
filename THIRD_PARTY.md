@@ -4,7 +4,7 @@ The integration code is independently authored. No upstream source trees, propri
 
 | Component | Observed license | Reviewed baseline | Use |
 |---|---|---|---|
-| [Harper](https://github.com/Automattic/harper) | Apache-2.0 | v3.3.0 | `harper.js`, explicit local WASM, English |
+| [Harper](https://github.com/Automattic/harper) | Apache-2.0 | v3.2.0 | `harper.js`, explicit local WASM, English |
 | [Virastar](https://github.com/brothersincode/virastar) | MIT | v0.22.1 | Persian orthography with restricted options |
 | [Virastar TS](https://github.com/nekofar/virastar) | Apache-2.0 | 69e5e6832a514e06ade468373c1b4924d19c4efb | Optional experimental adapter, no automatic dependency |
 | [Textlint](https://github.com/textlint/textlint) | MIT | v16.1.3 | Kernel and plaintext plugin |
