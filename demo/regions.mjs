@@ -23,7 +23,7 @@ export function buildDemoSnapshot(input,locked,snapshotId){
   if(typeof input!=='string'||typeof locked!=='string'||!input.isWellFormed()||input.length>1500)throw new TypeError('Invalid synthetic input');
   const text=input+'\n'+locked, b=boundaries(text);
   const known=shapes.flatMap(pattern=>Array.from(input.matchAll(pattern),m=>({start:m.index,end:m.index+m[0].length})));
-  const inferred=Array.from(input.matchAll(identifier),m=>({start:m.index,end:m.index+m[0].length})).filter(r=>!known.some(k=>r.start>=k.start&&r.end<=k.end));
+  const inferred=Array.from(input.matchAll(identifier)).filter(m=>/^[A-Za-z0-9]+$/.test(m[0])||/^[A-Z0-9./-]+$/.test(m[0])).map(m=>({start:m.index,end:m.index+m[0].length})).filter(r=>!known.some(k=>r.start>=k.start&&r.end<=k.end));
   const ranges=[...known,...inferred].sort((a,b)=>a.start-b.start||a.end-b.end);
   const merged=[];
   for(const r of ranges){
