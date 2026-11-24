@@ -24,3 +24,16 @@ export const extendedCases=Object.freeze([
  {id:'new-english',text:'We have recieved your qoutation and will proced with the evaluation.',languages:['en'],pairs:[['recieved','received'],['qoutation','quotation'],['proced','proceed']],first:['proced','proceed']},
  {id:'negation',text:'The goods are not available and the offer has not been approved.',languages:['en'],pairs:[],clean:true}
 ]);
+
+export const alpha7Cases=Object.freeze([
+ {id:'a7-fa-formal',text:'لطفا حتما و ترجیحا تا فردا پیش فاکتور را ارسال کنید. ضمنا مشخصات فنی قبلا اعلام شده است.',languages:['fa'],pairs:[['لطفا','لطفاً'],['حتما','حتماً']],expectedText:'لطفاً حتماً و ترجیحاً تا فردا پیش‌فاکتور را ارسال کنید. ضمناً مشخصات فنی قبلاً اعلام شده است.'},
+ {id:'a7-fa-clean',text:'لطفاً پیش‌فاکتور را همراه با مشخصات فنی و شرایط پرداخت ارسال کنید.',languages:['fa'],pairs:[],clean:true},
+ {id:'a7-agreement',text:'Each of the suppliers have submitted their quotation. The equipment were inspected yesterday.',languages:['en'],pairs:[['have','has'],['were','was']]},
+ {id:'a7-spelling',text:'Please provide the techncial specifcations, warrenty conditions and estimated delivary time.',languages:['en'],pairs:[['techncial','technical'],['specifcations','specifications'],['warrenty','warranty'],['delivary','delivery']]},
+ {id:'a7-mixed',text:'لطفا Technical Proposal و Commerical Offer را برای بررسی ارسال کنید. The supplier have confirmed availability.',languages:['fa','en'],pairs:[['لطفا','لطفاً'],['Commerical','Commercial'],['have','has']]},
+ {id:'a7-standards',text:'Please provde 10 PCS of API 600 valves, ASTM A216 WCB, DN100, PN40, ASME B16.5, Model: 3051CD2A22A1AB4.',languages:['en'],pairs:[['provde','provide']],protected:['10 PCS','API 600','ASTM A216 WCB','DN100','PN40','ASME B16.5','3051CD2A22A1AB4']},
+ {id:'a7-measurements',text:'لطفا قیمت ۱۲ عدد تجهیز با فشار 16 bar و دمای -20°C تا +120°C را اعلام کنید.',languages:['fa'],pairs:[['لطفا','لطفاً']],protected:['۱۲ عدد','16 bar','-20°C','+120°C']},
+ {id:'a7-links',text:'Please chek rfq@example.com and https://example.com/RFQ-2026. The document is stored in C:\\RFQ\\ABC-2026.pdf.',languages:['en'],pairs:[['chek','check']],protected:['rfq@example.com','https://example.com/RFQ-2026','C:\\RFQ\\ABC-2026.pdf']},
+ {id:'a7-negation',text:'The quotation is not approved. Partial shipment is not acceptable. Payment shall not be made before inspection.',languages:['en'],pairs:[],noReplacement:true},
+ {id:'a7-identifiers',text:'Please confirm availabilty of abc-2026/x1, 7MF4433-1DA22-2AB1, M20×1.5 and SS316L.',languages:['en'],pairs:[['availabilty','availability']],protected:['abc-2026/x1','7MF4433-1DA22-2AB1','M20×1.5','SS316L']}
+]);
