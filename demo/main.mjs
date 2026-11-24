@@ -8,20 +8,30 @@ function reset(message='Ready for review. Language is detected automatically.'){
   document.documentElement.dataset.review='idle';
   delete document.documentElement.dataset.analysisStatus;
 }
-function sample(text){reset();prose.value=text;}
-el('en').onclick=()=>sample('Please send teh quotation as soon as possible.');
-el('fa').onclick=()=>sample('فارسي را كمی درست تر می نويسيم');
+
 prose.oninput=()=>reset();cancel.onclick=()=>reset('Review cancelled.');
 function finish(result,plan){
   const state=plan.skipped&&result.status==='complete'?'partial':result.status;
   for(const f of result.findings){
-    const item=document.createElement('li');item.dir='auto';
-    item.textContent=f.original+(f.replacement===undefined?'':' → '+f.replacement)+' — '+f.message+' ['+f.provider+']';findings.append(item);
+    const language=plan.document.regions.find(r=>r.kind==='prose'&&f.start>=r.start&&f.end<=r.end)?.language;
+    const item=document.createElement('li'),pair=document.createElement('div');
+    item.dir='ltr';pair.className='finding-pair';pair.dir='ltr';
+    function term(value,kind){
+      const node=document.createElement('bdi');node.className='finding-'+kind;node.dir=language==='fa'?'rtl':'ltr';node.lang=language??'en';
+      node.textContent=value;node.setAttribute('aria-label',kind+': '+(value||'empty'));return node;
+    }
+    pair.append(term(f.original,'original'));
+    if(f.replacement!==undefined){
+      const arrow=document.createElement('span');arrow.className='finding-arrow';arrow.dir='ltr';arrow.textContent=' → ';arrow.setAttribute('aria-hidden','true');
+      pair.append(arrow,term(f.replacement,'replacement'));
+    }
+    const message=document.createElement('div');message.className='finding-message';message.dir='ltr';message.textContent=f.message+' ['+f.provider+']';
+    item.append(pair,message);findings.append(item);
   }
   status.textContent=state+': '+result.findings.length+' review suggestion(s).';
   const languages=plan.languages.map(x=>x==='fa'?'Persian':'English').join(', ')||'None';
   const reasons=[...new Set(result.diagnostics.map(x=>(labels[x.code]||'Reduced review coverage')+(x.provider?' ('+x.provider+')':'')))];
-  details.textContent='Detected language: '+languages+'. Protected inline ranges: '+plan.inlineProtected+'. Unclassified regions skipped: '+plan.skipped+'.'+(reasons.length?' '+reasons.join('; ')+'.':'')+(!plan.languages.length?' No eligible prose was reviewed.':'');
+  details.textContent='Detected language: '+languages+'. Protected inline ranges: '+plan.inlineProtected+'. Inferred identifier ranges: '+plan.inferredProtected+'. Unclassified regions skipped: '+plan.skipped+'.'+(reasons.length?' '+reasons.join('; ')+'.':'')+(!plan.languages.length?' No eligible prose was reviewed.':'');
   document.documentElement.dataset.analysisStatus=state;
   document.documentElement.dataset.review='complete';
 }

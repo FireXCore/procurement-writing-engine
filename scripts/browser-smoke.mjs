@@ -26,7 +26,8 @@ try{
   assert.match(await page.locator('#findings').innerText(),/teh\s*→\s*the/i);
   assert.match(await page.locator('#findings').innerText(),/as soon as possible/i);
   assert.equal(await page.locator('#protected').innerText(),'Rosemount 3051 — 3 PCS — 4–20 mA');
-  await page.locator('#fa').click();await page.locator('#run').click();
+  assert.equal(await page.locator('#en,#fa').count(),0,'Language sample selectors removed');
+  await page.locator('#prose').fill('فارسي را كمی درست تر می نويسيم');await page.locator('#run').click();
   await page.waitForFunction(()=>['complete','error'].includes(document.documentElement.dataset.review),{},{timeout:90000});
   assert.equal(await page.locator('html').getAttribute('data-review'),'complete');
   assert.match(await page.locator('#findings').innerText(),/فارسی|کمی/);
@@ -39,27 +40,35 @@ try{
     await page.waitForFunction(()=>['complete','error'].includes(document.documentElement.dataset.review),{},{timeout:90000});
     assert.equal(await page.locator('html').getAttribute('data-review'),'complete',c.id);
     const findings=await page.locator('#findings').innerText();
+    const pairs=await page.locator('#findings .finding-pair').allTextContents();
     const details=await page.locator('#details').innerText();
     assert.ok(details.includes('Detected language: '+(c.language==='fa'?'Persian':'English')),c.id+' '+details);
     assert.equal(await page.locator('#prose').inputValue(),c.text,c.id);
     assert.equal(await page.locator('#protected').innerText(),locked,c.id);
-    for(const [original,replacement] of c.pairs??[])assert.ok(findings.includes(original+' → '+replacement),c.id+' '+findings);
-    if(c.first){const alternatives=(await page.locator('#findings li').allTextContents()).filter(x=>x.startsWith(c.first[0]+' → '));assert.ok(alternatives[0]?.startsWith(c.first[0]+' → '+c.first[1]+' —'),c.id);}
+    for(const [original,replacement] of c.pairs??[])assert.ok(pairs.includes(original+' → '+replacement),c.id+' '+findings);
+    if(c.first){const alternatives=pairs.filter(x=>x.startsWith(c.first[0]+' → '));assert.equal(alternatives[0],c.first[0]+' → '+c.first[1],c.id);}
     if(c.message)assert.ok(findings.includes(c.message),c.id);
     if(c.browserNeed)assert.ok(findings.includes(c.browserNeed),c.id+' '+findings);
+    if(c.language==='fa'&&!c.clean){
+      const directions=await page.locator('#findings bdi').evaluateAll(nodes=>nodes.map(n=>({dir:n.dir,css:getComputedStyle(n).direction,isolate:getComputedStyle(n).unicodeBidi})));
+      assert.ok(directions.length&&directions.every(x=>x.dir==='rtl'&&x.css==='rtl'&&x.isolate==='isolate'),c.id);
+      assert.ok(await page.locator('#findings .finding-message').evaluateAll(nodes=>nodes.every(n=>getComputedStyle(n).direction==='ltr')),c.id);
+    }
+    if(c.id==='fa-halfspace')assert.deepEqual(pairs,['می کنیم → می‌کنیم','می کنیم. → می‌کنیم.']);
+    if(c.inferred)assert.ok(details.includes('Inferred identifier ranges: '+c.inferred+'.'),c.id);
     if(c.clean){assert.equal(await page.locator('html').getAttribute('data-analysis-status'),'complete',c.id);assert.equal(await page.locator('#findings li').count(),0,c.id);}
     if(c.protected)assert.ok(details.includes('Protected inline ranges: '+c.protected.length+'.'),c.id+' '+details);
     for(const token of c.protected??[])assert.ok(!findings.includes(token),c.id);
     console.log('Browser acceptance: '+c.id+' PASS');
   }
-  await page.locator('#prose').fill('Please send teh quote for ABC999.');
+  await page.locator('#prose').fill('Please send teh quote for abc999.');
   await page.locator('#run').click();
   assert.equal(await page.locator('html').getAttribute('data-analysis-status'),'partial');
   assert.match(await page.locator('#details').innerText(),/Unclassified regions skipped: 1/);
-  await page.locator('#en').click();await page.locator('#run').click();await page.locator('#cancel').click();
+  await page.locator('#prose').fill('Please send teh quotation.');await page.locator('#run').click();await page.locator('#cancel').click();
   assert.equal(await page.locator('html').getAttribute('data-review'),'idle');
   assert.equal(await page.locator('#findings li').count(),0);
-  await page.locator('#en').click();await page.locator('#run').click();await page.locator('#prose').fill('A different sentence.');
+  await page.locator('#prose').fill('Please send teh quotation.');await page.locator('#run').click();await page.locator('#prose').fill('A different sentence.');
   assert.equal(await page.locator('html').getAttribute('data-review'),'idle');
   assert.equal(await page.locator('#findings li').count(),0);
   assert.deepEqual(external,[],'Unexpected external browser traffic');

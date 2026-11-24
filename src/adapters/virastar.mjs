@@ -1,4 +1,4 @@
-import { contiguousDiff } from '../regions.mjs';
+import { orthographyEdits } from './orthography-diff.mjs';
 
 // Deny all documented transformations except narrow Persian orthography operations.
 // Changes to upstream defaults require requalification of the exact package version.
@@ -10,9 +10,7 @@ export function normalizerAdapter(normalize, {experimental=false}={}) {
   return Object.freeze({id:experimental?'virastar-ts':'virastar',languages:['fa'],async check(text) {
     const normalized = await normalize(text);
     if (typeof normalized !== 'string' || !normalized.isWellFormed()) throw new Error('Invalid normalizer result');
-    const edit = contiguousDiff(text,normalized);
-    if (!edit) return [];
-    return [{...edit,rule:'orthography',category:'orthography',message:'Review Persian orthography.',...(experimental?{replacement:undefined}:{})}];
+    return orthographyEdits(text,normalized).map(edit=>({...edit,rule:'orthography',category:'orthography',message:'Review Persian orthography.',...(experimental?{replacement:undefined}:{})}));
   }});
 }
 export async function createVirastar() {

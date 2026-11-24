@@ -21,7 +21,8 @@ test('real Virastar: Persian characters and half-space',async()=>{
   const r=await createEngine([p]).analyze(snap(text,'fa'));
   assert.equal(r.status,'complete');
   assert.ok(r.findings.length);
-  const f=r.findings[0], result=text.slice(0,f.start)+f.replacement+text.slice(f.end);
+  let result=text;
+  for(const f of [...r.findings].sort((a,b)=>b.start-a.start))result=result.slice(0,f.start)+f.replacement+result.slice(f.end);
   assert.ok(result.includes('فارسی')&&result.includes('کمی'));
 });
 test('real textlint kernel + plaintext plugin + procurement delivery advisory',async()=>{
@@ -63,6 +64,7 @@ test('real engines: all eleven human acceptance examples and source protection',
         assert.ok(fixes.length,JSON.stringify(result));
         for(const f of fixes)actual=actual.slice(0,f.start)+f.replacement+actual.slice(f.end);
         assert.equal(actual,c.expectedText);
+        if(c.id==='fa-halfspace'){assert.equal(fixes.length,2);assert.ok(fixes.every(f=>f.original.includes('می کنیم')&&f.replacement.includes('می‌کنیم')&&f.original.length<=8));}
       }
     });
   }finally{await harper.dispose();}

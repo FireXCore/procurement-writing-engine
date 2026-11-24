@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.0-alpha.3 — review presentation and coverage
+
+- Independent bounded Persian orthography patches with exact reconstruction.
+- RTL/LTR isolated source and replacement display; automatic language only.
+- Conservative demo-only identifier-shaped token isolation with explicit inferred-range count.
+- Expanded positive and negative tests, retaining all earlier acceptance cases.
+
 ## 0.1.0-alpha.2 — acceptance corrections
 
 - Automatic demo language selection and explicit partial-result reasons.

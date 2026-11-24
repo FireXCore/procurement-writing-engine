@@ -11,5 +11,6 @@ export const cases=Object.freeze([
  {id:'fa-clean',language:'fa',text:'لطفاً پیشنهاد قیمت خود را همراه با شرایط تحویل ارسال کنید.',clean:true},
  {id:'en-technical',language:'en',text:'Please send teh quotation for Rosemount 3051, 3 PCS, 4–20 mA.',pairs:[['teh','the']],protected:['Rosemount 3051','3 PCS','4–20 mA']},
  {id:'en-part-number',language:'en',text:'Please confirm availability of PN: 7MF4433-1DA22-2AB1.',protected:['PN: 7MF4433-1DA22-2AB1']},
- {id:'fa-quantity',language:'fa',text:'لطفا قيمت ۲۵ عدد شیر صنعتی را اعلام كنيد.',expectedText:'لطفا قیمت ۲۵ عدد شیر صنعتی را اعلام کنید.',protected:['۲۵ عدد'],browserNeed:'ک'}
+ {id:'fa-quantity',language:'fa',text:'لطفا قيمت ۲۵ عدد شیر صنعتی را اعلام كنيد.',expectedText:'لطفا قیمت ۲۵ عدد شیر صنعتی را اعلام کنید.',protected:['۲۵ عدد'],browserNeed:'ک'},
+ {id:'en-inferred-id',language:'en',text:'Please send teh quote for ABC999.',pairs:[['teh','the']],protected:['ABC999'],inferred:1}
 ]);

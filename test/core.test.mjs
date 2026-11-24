@@ -69,7 +69,7 @@ test('Harper adapter maps replace, remove, insert-after and frees WASM wrappers'
 });
 test('Virastar opts disable number/date normalization; experimental fork advisory only',async()=>{
  assert.equal(VIRASTAR_OPTIONS.fix_english_numbers,false);assert.equal(VIRASTAR_OPTIONS.normalize_dates,false);assert.equal(VIRASTAR_OPTIONS.fix_numeral_symbols,false);
- const s=snap('فارسي','fa');let r=await createEngine([normalizerAdapter(()=> 'فارسی')]).analyze(s);assert.equal(r.findings[0].replacement,'ی');r=await createEngine([experimentalVirastarAdapter({process:()=> 'فارسی'})]).analyze(s);assert.equal(r.findings[0].replacement,undefined);
+ const s=snap('فارسي','fa');let r=await createEngine([normalizerAdapter(()=> 'فارسی')]).analyze(s);assert.equal(r.findings[0].replacement,'فارسی');r=await createEngine([experimentalVirastarAdapter({process:()=> 'فارسی'})]).analyze(s);assert.equal(r.findings[0].replacement,undefined);
 });
 test('language routing avoids sending Persian to English engine',async()=>{
  let called=0;const e=createEngine([provider(()=>{called++;return []},'english',['en']),normalizerAdapter(x=>x)]);assert.equal((await e.analyze(snap('سلام','fa'))).status,'complete');assert.equal(called,0);

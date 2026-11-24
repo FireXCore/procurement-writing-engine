@@ -26,3 +26,5 @@ The browser entry point is separate from the Node-only transport entry point. Lo
 | Experimental | Virastar TS | Evaluation only, advisory |
 
 All proposals are source-anchored. Invalid spans, malformed results, and prohibited replacement tokens are rejected; protected slices are not sent to providers. The host must protect names and any commercial or technical facts not caught by heuristics. Security and semantic correctness are separate properties.
+
+In Alpha.3, Virastar's admitted prose output is aligned into bounded nonoverlapping patches, validated and reconstructed exactly before returning proposals. Demo-only identifier shape inference is not part of the SDK's authority boundary and must not be substituted for the host Region Map.

@@ -10,6 +10,9 @@ const shapes=[
   /(?<![\p{L}\p{N}])\d+(?:[–-]\d+)?[ \t]*mA\b/gu,
   /(?<![\p{L}\p{N}])[\u06f0-\u06f9\u0660-\u0669]+[ \t]+عدد(?![\p{L}\p{M}])/gu
 ];
+// Whole, whitespace-delimited uppercase alphanumeric identifiers only.
+// Never infer that surrounding words are technical data or that this is a production map.
+const identifier=/(?<!\S)(?=[A-Z0-9./-]*[A-Z])(?=[A-Z0-9./-]*[0-9])[A-Z0-9]+(?:[-./][A-Z0-9]+)*(?=$|\s|[.,;:!?)](?=$|\s))/gu;
 function detectLanguage(text){
   const latin=/\p{Script=Latin}/u.test(text), arabic=/\p{Script=Arabic}/u.test(text);
   if(latin===arabic)return null;
@@ -18,7 +21,9 @@ function detectLanguage(text){
 export function buildDemoSnapshot(input,locked,snapshotId){
   if(typeof input!=='string'||typeof locked!=='string'||!input.isWellFormed()||input.length>1500)throw new TypeError('Invalid synthetic input');
   const text=input+'\n'+locked, b=boundaries(text);
-  const ranges=shapes.flatMap(pattern=>Array.from(input.matchAll(pattern),m=>({start:m.index,end:m.index+m[0].length}))).sort((a,b)=>a.start-b.start||a.end-b.end);
+  const known=shapes.flatMap(pattern=>Array.from(input.matchAll(pattern),m=>({start:m.index,end:m.index+m[0].length})));
+  const inferred=Array.from(input.matchAll(identifier),m=>({start:m.index,end:m.index+m[0].length})).filter(r=>!known.some(k=>r.start>=k.start&&r.end<=k.end));
+  const ranges=[...known,...inferred].sort((a,b)=>a.start-b.start||a.end-b.end);
   const merged=[];
   for(const r of ranges){
     const prev=merged.at(-1);
@@ -42,7 +47,7 @@ export function buildDemoSnapshot(input,locked,snapshotId){
   const invalid=merged.some(r=>!b.has(r.start)||!b.has(r.end))||!b.has(input.length);
   if(invalid){
     skipped=1;protect(0,text.length);
-    return {document:{text,snapshotId,regions},languages:[],inlineProtected:0,skipped};
+    return {document:{text,snapshotId,regions},languages:[],inlineProtected:0,inferredProtected:0,skipped};
   }
   let cursor=0;
   for(const r of merged){gap(cursor,r.start);protect(r.start,r.end);cursor=r.end;}
@@ -50,5 +55,5 @@ export function buildDemoSnapshot(input,locked,snapshotId){
   protect(input.length,text.length);
   const document={text,snapshotId,regions};
   if(!validateDocument(document))throw new Error('Invalid synthetic region partition');
-  return {document,languages:[...languages],inlineProtected:merged.length,skipped};
+  return {document,languages:[...languages],inlineProtected:merged.length,inferredProtected:inferred.length,skipped};
 }

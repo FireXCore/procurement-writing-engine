@@ -49,3 +49,7 @@ A single modular library orchestrates adapters. Browser profile: Harper + Virast
 ### Registry qualification addendum — 2026-11-24
 
 The GitHub v3.3.0 tag was reviewed, but npm returned ETARGET for harper.js@3.3.0. The registry's latest available version was 3.2.0. The v3.2.0 Linter.ts and WASM lib.rs have identical Git blob hashes to their v3.3.0 counterparts, and the package export and inline WASM entry point were checked at v3.2.0. The published dependency is pinned to 3.2.0, subject to actual upstream/browser CI. No parser was ported or replaced.
+
+### Alpha.3 orthography adapter refinement
+
+The original one-span contiguous diff described above has been replaced in the Virastar adapter by bounded exact-word alignment and independently validated word/phrase patches. No Virastar linguistic transformations, package versions, or protected-region admission rules changed. Unsafe or excessive patch sets are rejected as a whole. See the Alpha.3 acceptance document for scope.
