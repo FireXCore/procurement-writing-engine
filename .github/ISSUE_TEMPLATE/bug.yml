@@ -1,0 +1,35 @@
+name: Bug report
+description: Report a reproducible contract or provider issue
+title: '[Bug] '
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Use synthetic examples only. Do not include customer, supplier or confidential procurement data. Report vulnerabilities privately.
+  - type: input
+    id: version
+    attributes:
+      label: Version and runtime
+      placeholder: 0.1.0-alpha.1 / Node 22 / Chromium
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Synthetic reproduction
+      description: Include a minimal source string, region map and provider if relevant.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected and actual behavior
+    validations:
+      required: true
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Data safety
+      options:
+        - label: All examples and logs are synthetic or fully sanitized.
+          required: true

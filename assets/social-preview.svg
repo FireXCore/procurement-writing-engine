@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640">
+<rect width="1280" height="640" fill="#142A35"/>
+<path d="M836 0h444v640H836z" fill="#193542"/>
+<g stroke="#2C4C53" fill="none" stroke-width="1"><path d="M836 0v640M920 0v640M1004 0v640M1088 0v640M1172 0v640M1256 0v640M836 80h444M836 160h444M836 240h444M836 320h444M836 400h444M836 480h444M836 560h444"/></g>
+<rect x="66" y="60" width="75" height="75" rx="16" fill="#284753"/><g transform="translate(66 60) scale(.586)"><path d="M31 29h41l24 24v46H31z" fill="none" stroke="#F3F5F2" stroke-width="7" stroke-linejoin="round"/><path d="M72 29v24h24M45 59h19M45 72h14" stroke="#F3F5F2" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="m58 88 12 12 32-35" stroke="#55D8AC" stroke-width="9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>
+<text x="161" y="104" font-family="DejaVu Sans,sans-serif" font-size="19" font-weight="700" letter-spacing="3" fill="#55D8AC">OPEN SOURCE / ALPHA</text>
+<g font-family="DejaVu Sans,sans-serif" font-weight="700" fill="#F3F5F2"><text x="66" y="238" font-size="70">Procurement</text><text x="66" y="323" font-size="70">Writing Engine</text></g>
+<path d="M70 362h68" stroke="#55D8AC" stroke-width="5"/>
+<g font-family="DejaVu Sans,sans-serif" fill="#C4D6D9" font-size="27"><text x="67" y="411">Better prose. Protected technical data.</text><text x="67" y="450">English + Persian. No LLM required.</text></g>
+<g font-family="DejaVu Sans,sans-serif" font-size="16" letter-spacing="1.8" font-weight="700"><text x="69" y="567" fill="#55D8AC">MIT LICENSE</text><text x="229" y="567" fill="#C4D6D9">REVIEW-ONLY</text><text x="403" y="567" fill="#C4D6D9">MODULAR PROVIDERS</text></g>
+<g transform="translate(877 162)"><rect width="330" height="316" rx="23" fill="#203D49" stroke="#638B89"/><path d="M53 81h200M53 113h150M53 145h223M53 177h160" stroke="#91A9AB" stroke-width="10" stroke-linecap="round"/><rect x="42" y="207" width="246" height="62" rx="11" fill="#142A35" stroke="#55D8AC" stroke-width="2"/><path d="m66 237 9 9 18-19" fill="none" stroke="#55D8AC" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><text x="105" y="243" font-family="DejaVu Sans,sans-serif" font-size="14" font-weight="700" fill="#55D8AC">REVIEW SUGGESTION</text></g>
+</svg>

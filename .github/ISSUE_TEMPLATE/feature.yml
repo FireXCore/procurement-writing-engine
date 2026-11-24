@@ -1,0 +1,19 @@
+name: Feature request
+description: Propose a writing policy, integration or provider improvement
+title: '[Feature] '
+labels: [enhancement]
+body:
+  - type: textarea
+    id: usecase
+    attributes:
+      label: Procurement use case
+      description: Describe the writing problem and the expected review behavior with synthetic text.
+    validations:
+      required: true
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Security and compatibility constraints
+      description: Include protected ranges, locale, upstream dependency and acceptance criteria where relevant.
+    validations:
+      required: true

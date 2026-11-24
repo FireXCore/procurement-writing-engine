@@ -1,0 +1,35 @@
+name: Resolve release inputs
+on:
+  push:
+    branches: [release-bootstrap]
+permissions:
+  contents: read
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Resolve exact dependency lock
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund --registry=https://registry.npmjs.org/
+      - name: Rasterize approved SVG branding
+        run: |
+          if ! command -v rsvg-convert >/dev/null; then sudo apt-get update -qq && sudo apt-get install -y librsvg2-bin; fi
+          rsvg-convert -w 512 -h 512 assets/logo.svg -o assets/logo.png
+          rsvg-convert -w 1280 -h 640 assets/social-preview.svg -o assets/social-preview.png
+      - name: Export verified release inputs
+        run: |
+          for file in package-lock.json assets/logo.png assets/social-preview.png; do
+            printf 'PWE_BEGIN %s %s\n' "$file" "$(git hash-object "$file")"
+            base64 -w 1000 "$file"
+            printf '\nPWE_END %s\n' "$file"
+          done
+      - name: Verify core
+        run: |
+          npm run check
+          npm test

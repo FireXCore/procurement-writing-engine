@@ -1,0 +1,99 @@
+{
+  "name": "procurement-writing-engine",
+  "version": "0.1.0-alpha.1",
+  "description": "Composable English and Persian writing review for procurement and technical commercial prose. No LLM required.",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/index.d.mts",
+      "import": "./src/index.mjs"
+    },
+    "./node": {
+      "types": "./src/node/index.d.mts",
+      "import": "./src/node/index.mjs"
+    }
+  },
+  "files": [
+    "src",
+    "styles",
+    "examples",
+    "docs",
+    "README.md",
+    "LICENSE",
+    "THIRD_PARTY.md",
+    "SECURITY.md",
+    ".vale.ini",
+    "assets/logo.svg",
+    "CHANGELOG.md",
+    "assets/social-preview.png",
+    "assets/wordmark.svg",
+    "CONTRIBUTING.md",
+    "CODE_OF_CONDUCT.md"
+  ],
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "test:upstream": "node --test test/upstream.integration.mjs",
+    "check": "node scripts/check.mjs",
+    "test:services": "node --test test/services.integration.mjs",
+    "typecheck": "tsc --strict --target ES2022 --module NodeNext --moduleResolution NodeNext --noEmit test/types.mts",
+    "build:demo": "vite build demo --config demo/vite.config.mjs --base=./ --outDir=../dist/demo",
+    "demo": "vite demo --config demo/vite.config.mjs --host 127.0.0.1",
+    "test:browser": "node scripts/browser-smoke.mjs",
+    "verify": "npm run check && npm test && npm run typecheck && npm run test:upstream && npm run build:demo && npm run test:browser",
+    "release:check": "node scripts/release-check.mjs"
+  },
+  "peerDependencies": {
+    "harper.js": "3.3.0",
+    "virastar": "0.22.1",
+    "@textlint/kernel": "16.1.3",
+    "@textlint/textlint-plugin-text": "16.1.3"
+  },
+  "peerDependenciesMeta": {
+    "harper.js": {
+      "optional": true
+    },
+    "virastar": {
+      "optional": true
+    },
+    "@textlint/kernel": {
+      "optional": true
+    },
+    "@textlint/textlint-plugin-text": {
+      "optional": true
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FireXCore/procurement-writing-engine.git"
+  },
+  "homepage": "https://github.com/FireXCore/procurement-writing-engine#readme",
+  "bugs": {
+    "url": "https://github.com/FireXCore/procurement-writing-engine/issues"
+  },
+  "keywords": [
+    "procurement",
+    "technical-writing",
+    "grammar-checker",
+    "persian",
+    "english",
+    "rfq",
+    "erp",
+    "webassembly",
+    "offline",
+    "writing-assistant"
+  ],
+  "devDependencies": {
+    "harper.js": "3.3.0",
+    "virastar": "0.22.1",
+    "@textlint/kernel": "16.1.3",
+    "@textlint/textlint-plugin-text": "16.1.3",
+    "typescript": "5.9.3",
+    "vite": "8.1.4",
+    "playwright-core": "1.58.2"
+  }
+}
