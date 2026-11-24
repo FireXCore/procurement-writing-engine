@@ -26,6 +26,8 @@ export const procurementDeliveryRule = Object.freeze({
 // Deliberately restricted to direct procurement noun phrases with unambiguous following verbs.
 // Not a general subject/verb parser. Quoted text is skipped; all fixes remain review-only.
 const agreementPatterns = [
+  {pattern:/(?:^|[.!?]\s+|\bthat\s+)(each\s+of\s+the\s+(?:suppliers|vendors|manufacturers|contractors|buyers|customers)\s+)(have)(?=\s+(?:confirmed|submitted|provided|sent|received|accepted|rejected|approved|acknowledged)\b)/giu,replacement:'has'},
+  {pattern:/(?:^|[.!?]\s+|\bthat\s+)(the\s+equipment\s+)(were)(?=\s+(?:inspected|tested|delivered|installed|received|approved|repaired|shipped|available)\b)/giu,replacement:'was'},
   {pattern:/(?:^|[.!?]\s+|\bthat\s+)(the\s+(?:supplier|vendor|manufacturer|contractor|buyer|customer)\s+)(have)(?=\s+(?:confirmed|submitted|provided|sent|received|accepted|rejected|approved|acknowledged)\b)/giu,replacement:'has'},
   {pattern:/(?:^|[.!?]\s+|\bthat\s+)(the\s+(?:goods|materials|items|documents|products|parts)\s+)(is)(?=\s+(?:available|ready|in stock|required|approved|complete)\b)/giu,replacement:'are'}
 ];

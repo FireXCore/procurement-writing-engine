@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {formalPersianOrthography} from '../src/adapters/formal-persian.mjs';
 import {normalizerAdapter,createEngine} from '../src/index.mjs';
 test('formal Persian policy adds tanwin only to reviewed complete words',()=>{
- const words=['لطفا','حتما','قطعا','واقعا','تقریبا','فورا','قبلا','بعدا','موقتا','رسما','صرفا','مستقیما'];
+ const words=['لطفا','حتما','قطعا','واقعا','تقریبا','فورا','قبلا','بعدا','موقتا','رسما','صرفا','مستقیما','ترجیحا','ضمنا'];
  for(const word of words){assert.equal(formalPersianOrthography(word),word+'\u064b');assert.equal(formalPersianOrthography(word+'\u064b'),word+'\u064b');}
  assert.equal(formalPersianOrthography('لطفا، حتما و قبلا.'),'لطفاً، حتماً و قبلاً.');
  assert.equal(formalPersianOrthography('اینجا شما کالا فردا امضا رضا زیبا لطفاً لطفًا لطفاها لطفا‌نامه'), 'اینجا شما کالا فردا امضا رضا زیبا لطفاً لطفًا لطفاها لطفا‌نامه');
@@ -22,4 +22,9 @@ test('formal policy remains review-only and does not reach protected ranges',asy
  assert.equal(r.status,'complete');assert.equal(r.apply,false);
  assert.deepEqual(calls,[text.slice(0,start)]);
  assert.equal(r.findings.length,1);assert.equal(r.findings[0].original,'لطفا');assert.equal(r.findings[0].replacement,'لطفاً');
+});
+
+test('formal procurement compound is bounded and idempotent',()=>{
+ assert.equal(formalPersianOrthography('ترجیحا پیش فاکتور؛ ضمنا پیش‌فاکتور'),'ترجیحاً پیش‌فاکتور؛ ضمناً پیش‌فاکتور');
+ assert.equal(formalPersianOrthography('پیش فاکتورها و پیش‌فاکتور'),'پیش فاکتورها و پیش‌فاکتور');
 });

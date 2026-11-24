@@ -4,6 +4,13 @@ import { boundaries, eligible, validateDocument, LIMITS } from '../src/regions.m
 // Recognize explicit fixture terms and a small set of well-bounded quantity/identifier shapes.
 // Unknown tokens fail closed; only separated, grapheme-aligned language runs are reviewed.
 const shapes=[
+  /(?<![\p{L}\p{N}._%+-])[A-Za-z0-9][A-Za-z0-9._%+-]*@[A-Za-z0-9]+(?:[-.][A-Za-z0-9]+)*\.[A-Za-z]{2,63}(?=$|[\s,;.!?)])/gu,
+  /(?<![\p{L}\p{N}])https?:\/\/[A-Za-z0-9](?:[A-Za-z0-9.-]*[A-Za-z0-9])?(?::\d{1,5})?(?:[/?#][^\s<>"'()[\]{}]*[^\s<>"'()[\]{}.,;!?])?(?=$|[\s,;.!?)])/gu,
+  /(?<![\p{L}\p{N}])[A-Za-z]:\\(?:[A-Za-z0-9_.-]+\\)*[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+)*(?=$|[\s,;.!?)])/gu,
+  /\b(?:API[ \t]+\d{2,5}|ASME[ \t]+[A-Z]\d+(?:\.\d+)+)(?=$|[\s,;.)])/gu,
+  /\bM\d+(?:[×x]\d+(?:\.\d+)?)?(?=$|[\s,;.)])/gu,
+  /(?<![\p{L}\p{N}])[+-]?\d+(?:\.\d+)?[ \t]*(?:°[CF]|bar|mbar|kPa|MPa|psi|mm|cm|kg|Hz|kW|V|A)(?![\p{L}\p{N}])/gu,
+  /(?<!\S)[a-z]+-\d{2,}\/[a-z]+\d+(?=$|[\s,;.!?)])/gu,
   /\bASTM[ \t]+[A-Z]\d{2,5}(?:[ \t]+[A-Z]{2,5})?(?=$|[\s,;.)])/gu,
   /\bRosemount[ \t]+3051\b/giu,
   /\b(?:PN|P\/N|Part[ \t]+Number):[ \t]*[A-Z0-9]+(?:[-./][A-Z0-9]+)*(?=$|[\s,;.)])/gu,
@@ -22,7 +29,11 @@ function detectLanguage(text){
 export function buildDemoSnapshot(input,locked,snapshotId){
   if(typeof input!=='string'||typeof locked!=='string'||!input.isWellFormed()||input.length>1500)throw new TypeError('Invalid synthetic input');
   const text=input+'\n'+locked, b=boundaries(text);
-  const known=shapes.flatMap(pattern=>Array.from(input.matchAll(pattern),m=>({start:m.index,end:m.index+m[0].length})));
+  const known=shapes.flatMap(pattern=>Array.from(input.matchAll(pattern),m=>({start:m.index,end:m.index+m[0].length}))).filter(r=>{
+    const left=input.slice(0,r.start).match(/\S+$/u)?.[0]??'';
+    const right=input.slice(r.end).match(/^\S+/u)?.[0]??'';
+    return (!left||/^[([{,;]+$/u.test(left))&&(!right||/^[.,;:!?)}\]]+$/u.test(right));
+  });
   const inferred=Array.from(input.matchAll(identifier)).filter(m=>/^[A-Za-z0-9]+$/.test(m[0])||/^[A-Z0-9./-]+$/.test(m[0])).map(m=>({start:m.index,end:m.index+m[0].length})).filter(r=>!known.some(k=>r.start>=k.start&&r.end<=k.end));
   const ranges=[...known,...inferred].sort((a,b)=>a.start-b.start||a.end-b.end);
   const merged=[];
@@ -78,5 +89,7 @@ export function buildDemoSnapshot(input,locked,snapshotId){
   // Bound highly alternating input without weakening the host validation.
   if(regions.length>LIMITS.regions)return {document:{text,snapshotId,regions:[{start:0,end:text.length,kind:'protected'}]},languages:[],inlineProtected:0,inferredProtected:0,skipped:1};
   if(!validateDocument(document))throw new Error('Invalid synthetic region partition');
-  return {document,languages:[...languages],inlineProtected:merged.length,inferredProtected:inferred.length,skipped};
+  const reviewedUnits=regions.filter(r=>r.kind==='prose').reduce((n,r)=>n+text.slice(r.start,r.end).replace(/\s/gu,'').length,0);
+  const totalUnits=input.replace(/\s/gu,'').length;
+  return {document,languages:[...languages],inlineProtected:merged.length,inferredProtected:inferred.length,skipped,reviewedUnits,totalUnits};
 }

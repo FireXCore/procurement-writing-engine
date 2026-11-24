@@ -34,7 +34,7 @@ test('real textlint kernel + plaintext plugin + procurement delivery advisory',a
 
 import { procurementPolicyRules, procurementAgreementRule } from '../src/index.mjs';
 import { buildDemoSnapshot } from '../demo/regions.mjs';
-import { cases, locked, extendedCases } from './acceptance-fixtures.mjs';
+import { cases, locked, extendedCases, alpha7Cases } from './acceptance-fixtures.mjs';
 
 test('real engines: all human acceptance examples and source protection', {timeout:120000}, async t=>{
   const {binaryInlined}=await import('harper.js/binaryInlined');
@@ -81,7 +81,7 @@ test('real engines: mixed languages, lower-case identifiers and contextual first
  const harper=await createHarper({binary:binaryInlined,worker:false});
  try{
   const virastar=await createVirastar(),policy=await createTextlint(procurementPolicyRules);
-  for(const c of extendedCases)await t.test(c.id,async()=>{
+  for(const c of [...extendedCases,...alpha7Cases])await t.test(c.id,async()=>{
    const p=buildDemoSnapshot(c.text,locked,c.id);assert.deepEqual(p.languages,c.languages);
    const calls=[];
    const providers=[harper.provider,virastar,policy].map(provider=>({...provider,check:(text,lang,signal)=>{calls.push(text);return provider.check(text,lang,signal);}}));
@@ -91,6 +91,9 @@ test('real engines: mixed languages, lower-case identifiers and contextual first
    for(const [original,replacement] of c.pairs)assert.ok(report.findings.some(f=>f.original===original&&f.replacement===replacement),JSON.stringify(report));
    if(c.first)assert.equal(report.findings.find(f=>f.original===c.first[0])?.replacement,c.first[1]);
    if(c.clean){assert.equal(report.status,'complete');assert.equal(report.findings.length,0);}
+   if(c.noReplacement)assert.ok(report.findings.every(f=>f.replacement===undefined));
+   if(c.expectedText){let actual=c.text;for(const f of report.findings.filter(f=>f.replacement!==undefined).sort((a,b)=>b.start-a.start))actual=actual.slice(0,f.start)+f.replacement+actual.slice(f.end);assert.equal(actual,c.expectedText);}
+   for(const f of report.findings){assert.equal(p.document.text.slice(f.start,f.end),f.original);assert.ok(p.document.regions.some(r=>r.kind==='prose'&&r.start<=f.start&&r.end>=f.end));}
   });
  }finally{await harper.dispose();}
 });

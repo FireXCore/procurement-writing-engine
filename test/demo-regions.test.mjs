@@ -39,7 +39,7 @@ test('isolated inferred identifier protects exactly its span and admits surround
  }
 });
 test('ambiguous identifiers and mixed scripts still fail closed',()=>{
- for(const input of ['Please send teh quote for ABC999@example.com.','Please send teh quote for ABC999_XX.','لطفا ABC999نام را بررسی کنید.']){
+ for(const input of ['Please send teh quote for ABC999@@example.com.','Please send teh quote for ABC999_XX.','لطفا ABC999نام را بررسی کنید.']){
   const p=buildDemoSnapshot(input,locked,'ambiguous');assert.equal(p.skipped,1,input);assert.equal(p.inferredProtected,0,input);assert.deepEqual(p.languages,[],input);
  }
 });
@@ -59,7 +59,24 @@ test('mixed prose and technical standard remain source-bound and isolated',async
  }
 });
 test('mixed attached tokens and unsafe URLs never become editable',()=>{
- for(const text of ['سلامvalve','hello@example.com سلام','سلام abc999_XX','hello\u202eworld سلام']){
+ for(const text of ['سلامvalve','hello@@example.com سلام','سلام abc999_XX','hello\u202eworld سلام']){
   const p=buildDemoSnapshot(text,locked,'unsafe');assert.ok(p.skipped);assert.deepEqual(p.languages,[]);
  }
+});
+
+import {alpha7Cases} from './acceptance-fixtures.mjs';
+for(const c of alpha7Cases)test('alpha7 exact protected spans: '+c.id,async()=>{
+ const p=buildDemoSnapshot(c.text,locked,c.id);
+ assert.ok(validateDocument(p.document));
+ assert.deepEqual(p.languages,c.languages);
+ assert.equal(p.skipped,0,c.id);
+ for(const token of c.protected??[]){
+  const start=c.text.indexOf(token);
+  assert.ok(start>=0&&p.document.regions.some(r=>r.kind==='protected'&&r.start<=start&&r.end>=start+token.length),token);
+ }
+ const calls=[];const engine=createEngine([{id:'fixture',languages:['fa','en'],check:(text)=>{calls.push(text);return [];}}]);
+ const report=await engine.analyze(p.document);
+ assert.equal(report.apply,false);assert.equal(report.status,'complete');
+ for(const text of calls)for(const token of [...(c.protected??[]),locked])assert.ok(!text.includes(token),token);
+ assert.ok(calls.length);
 });
