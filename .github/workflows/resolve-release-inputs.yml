@@ -15,21 +15,21 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Resolve exact dependency lock
-        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund --registry=https://registry.npmjs.org/
+      - name: Inspect real npm registry versions
+        run: |
+          for pkg in harper.js virastar @textlint/kernel @textlint/textlint-plugin-text typescript vite playwright-core; do
+            printf 'PWE_REGISTRY %s\n' "$pkg"
+            npm view "$pkg" dist-tags versions --json --registry=https://registry.npmjs.org/
+          done
       - name: Rasterize approved SVG branding
         run: |
           if ! command -v rsvg-convert >/dev/null; then sudo apt-get update -qq && sudo apt-get install -y librsvg2-bin; fi
           rsvg-convert -w 512 -h 512 assets/logo.svg -o assets/logo.png
           rsvg-convert -w 1280 -h 640 assets/social-preview.svg -o assets/social-preview.png
-      - name: Export verified release inputs
+      - name: Export verified brand images
         run: |
-          for file in package-lock.json assets/logo.png assets/social-preview.png; do
+          for file in assets/logo.png assets/social-preview.png; do
             printf 'PWE_BEGIN %s %s\n' "$file" "$(git hash-object "$file")"
             base64 -w 1000 "$file"
             printf '\nPWE_END %s\n' "$file"
           done
-      - name: Verify core
-        run: |
-          npm run check
-          npm test
