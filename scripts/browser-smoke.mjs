@@ -24,6 +24,8 @@ try{
   assert.equal(await page.locator('#demo-version').innerText(),pkg.version+' · LOCAL DEMO','Demo version must match package.json');
 
   assert.equal(await page.locator('#neural-start').isDisabled(),true);
+  assert.equal(await page.locator('#neural-protocol').inputValue(),'sentence');
+  assert.equal(await page.locator('#neural-baseline').isEnabled(),true);
   assert.equal(await page.locator('#neural-consent').isChecked(),false);
   assert.match(await page.locator('#neural-status').innerText(),/Not started/);
   await page.locator('#neural-consent').check();
