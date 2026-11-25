@@ -37,4 +37,12 @@ export function createContextualProvider(options:{readonly languages?:readonly L
 
 export interface LocalGenerationMessage { readonly role:'system'|'user'; readonly content:string }
 export interface LocalGenerationOptions { readonly do_sample:false; readonly max_new_tokens:384; readonly num_return_sequences:1; readonly return_full_text:false }
-export function createLocalGenerationProvider(options:{readonly languages?:readonly Language[];readonly generator:(messages:LocalGenerationMessage[],options:LocalGenerationOptions)=>unknown|Promise<unknown>}):Provider;
+export function createLocalGenerationProvider(options:{readonly languages?:readonly Language[];readonly generator:(messages:LocalGenerationMessage[],options:LocalGenerationOptions,signal?:AbortSignal)=>unknown|Promise<unknown>}):Provider;
+
+export type LocalModelPrecision = 'q4'|'q4f16'|'q8'|'fp16'|'fp32';
+export interface TransformersRuntime {
+  readonly env:{readonly allowRemoteModels:boolean;readonly allowLocalModels:boolean};
+  readonly pipeline:(task:'text-generation',model:string,options:{device:'webgpu'|'wasm';dtype:LocalModelPrecision;local_files_only:true})=>Promise<unknown>;
+  readonly InterruptableStoppingCriteria?:new()=>{interrupt():void};
+}
+export function createTransformersProvider(options:{readonly runtime:TransformersRuntime;readonly model:string;readonly device?:'webgpu'|'wasm';readonly dtype?:LocalModelPrecision;readonly fallbackToWasm?:boolean;readonly wasmDtype?:LocalModelPrecision;readonly languages?:readonly Language[]}):Promise<{readonly provider:Provider;readonly device:'webgpu'|'wasm';readonly dtype:LocalModelPrecision;dispose():Promise<void>}>;

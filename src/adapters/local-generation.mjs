@@ -26,7 +26,7 @@ export function createLocalGenerationProvider({generator,languages=['en','fa']}=
  return createContextualProvider({languages,infer:async({text,language,signal})=>{
   if(signal?.aborted)throw new Error('Cancelled');
   const messages=[{role:'system',content:SYSTEM},{role:'user',content:JSON.stringify({language,text})}];
-  const result=await generator(messages,{do_sample:false,max_new_tokens:384,num_return_sequences:1,return_full_text:false});
+  const result=await generator(messages,{do_sample:false,max_new_tokens:384,num_return_sequences:1,return_full_text:false},signal);
   if(signal?.aborted)throw new Error('Cancelled');
   return parseEdits(text,assistantText(result));
  }});

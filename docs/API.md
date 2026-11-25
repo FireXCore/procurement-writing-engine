@@ -34,3 +34,30 @@ Alpha.4 `createVirastar()` composes upstream cleanup with an explicit local form
 ### Local generation bridge (experimental)
 
 `createLocalGenerationProvider({generator,languages})` uses an already initialized Transformers.js-compatible chat pipeline, with bounded deterministic generation and strict JSON source edits. Only admitted prose is sent to the host callable. Missing, ambiguous or overlapping anchors, nonlocal rewrites, selected contract and polarity changes, and nonminimal spelling edits are rejected. The direct contextual provider now uses the same conservative policy; style and terminology rewrites are rejected. This is not semantic equivalence, automatic model loading, a privacy sandbox, or evidence of actual model accuracy. Host owns verified offline assets, runtime, network policy, worker termination and model qualification. See https://huggingface.co/docs/transformers.js/en/api/pipelines . Five grouped adapter checks were exercised with simulated generation outputs; real-model inference was not exercised.
+
+### Explicit Transformers.js lifecycle (experimental)
+
+`createTransformersProvider` connects the existing generation bridge to an isolated host-provided Transformers.js runtime. It requires `allowLocalModels=true`, `allowRemoteModels=false`, a local model identifier, and explicit asset provisioning. It requests `local_files_only:true`. WebGPU is the default; WASM fallback occurs only if explicitly enabled and has a separate precision setting. Runtime globals are not modified. Generation is single-flight, cooperatively interruptible when the runtime supports it, and disposed explicitly. The host must enforce offline network policy, verified local WASM/model assets, cold-load deadlines, worker termination and resource budgets. A model or its runtime is not bundled.
+
+Example (host must provision a compatible model under its localModelPath first):
+
+```js
+import * as runtime from '@huggingface/transformers';
+import {createEngine,createTransformersProvider} from 'procurement-writing-engine';
+runtime.env.allowRemoteModels=false;
+runtime.env.allowLocalModels=true;
+runtime.env.localModelPath='/models/';
+// Host also configures local WASM assets and enforces network isolation.
+const neural=await createTransformersProvider({
+  runtime,model:'pwe/qwen-text',device:'webgpu',dtype:'q4',fallbackToWasm:true
+});
+const text='Please chek the quotation.';
+try{
+  const report=await createEngine([neural.provider]).analyze({
+    text,snapshotId:'synthetic',regions:[{start:0,end:text.length,kind:'prose',language:'en'}]
+  });
+  console.log(report);
+}finally{await neural.dispose();}
+```
+
+Candidate model: https://huggingface.co/onnx-community/Qwen3.5-0.8B-Text-ONNX . Runtime version, exact model revision, files, license, precision, Persian/English accuracy and WebGPU/WASM performance require independent qualification. The adapter tests use simulated model output, not real inference. See https://huggingface.co/docs/transformers.js/en/api/env and https://huggingface.co/docs/transformers.js/api/generation/stopping_criteria .

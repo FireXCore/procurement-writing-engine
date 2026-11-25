@@ -10,3 +10,5 @@ export {protectEntitySpans} from './protection.mjs';
 export {createContextualProvider} from './adapters/contextual.mjs';
 
 export {createLocalGenerationProvider} from './adapters/local-generation.mjs';
+
+export {createTransformersProvider} from './adapters/transformers-runtime.mjs';

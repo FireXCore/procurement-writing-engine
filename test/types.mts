@@ -19,3 +19,8 @@ void [safe,range,contextual];
 import {createLocalGenerationProvider} from '../src/index.mjs';
 const generated:Provider=createLocalGenerationProvider({generator:async()=>[{generated_text:'[]'}]});
 void generated;
+
+import {createTransformersProvider,type TransformersRuntime} from '../src/index.mjs';
+const localRuntime:TransformersRuntime={env:{allowLocalModels:true,allowRemoteModels:false},pipeline:async()=>null};
+const initTransformer=()=>createTransformersProvider({runtime:localRuntime,model:'pwe/qwen-text'});
+void initTransformer;
