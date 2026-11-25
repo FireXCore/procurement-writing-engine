@@ -33,6 +33,28 @@ const namePatterns=[
   /(?<name>شرکت[ \t]+[\p{Script=Arabic}\p{M}\u200c]+(?:[ \t]+[\p{Script=Arabic}\p{M}\u200c]+){0,3})(?=[ \t]+(?:تماس|مکاتبه|همکاری|مذاکره|استعلام)(?=[ \t،؛.]|$))/dgu,
   /(?:EXW|FCA|CPT|CIP|DAP|DPU|DDP|FAS|FOB|CFR|CIF)[ \t]+(?<name>\p{Lu}[\p{L}\p{M}]*(?:[ \t]+(?!Incoterms\b)\p{Lu}[\p{L}\p{M}]*){0,3})(?=[ \t]+Incoterms\b|[.,;!?)]|$)/dgu
 ];
+
+// A capitalized Latin singleton embedded in Persian prose is ambiguous:
+// it may be a proper name or a foreign term. Quarantine it without claiming
+// its identity. Full English runs remain eligible. Do not cross sentences.
+function embeddedLatinCandidates(input){
+  const tokens=[...input.matchAll(/\S+/gu)], result=[];
+  const faLetter=/[\p{Script=Arabic}&&\p{L}]/v;
+  const startsName=/^\p{Lu}[\p{Script=Latin}\p{M}]*$/u;
+  const trimEdges=/^[("'“‘\[]+|[.,،؛;:!?؟)"'”’\]]+$/gu;
+  const sentenceEnd=/[.!?؟][)"'”’\]]*$/u;
+  for(let i=1;i+1<tokens.length;i++){
+    const prev=tokens[i-1],cur=tokens[i],next=tokens[i+1];
+    const original=cur[0],name=original.replace(trimEdges,'');
+    if(!startsName.test(name)||!faLetter.test(prev[0])||!faLetter.test(next[0])||
+      /[A-Za-z]/u.test(prev[0]+next[0])||sentenceEnd.test(prev[0])||sentenceEnd.test(original)||
+      /[\r\n]/u.test(input.slice(prev.index+prev[0].length,cur.index)+input.slice(cur.index+original.length,next.index)))continue;
+    const start=cur.index+original.indexOf(name);
+    result.push({start,end:start+name.length});
+  }
+  return result;
+}
+
 // Count disjoint non-whitespace UTF-16 units on the final partition.
 // Recognized patterns are not proof of entity identity.
 function summarize(input,regions,known,suspected,blocked=false){
@@ -66,7 +88,7 @@ export function buildResearchSnapshot(input,locked,snapshotId,{hostLiterals=[]}=
     // Accept only complete lexical spans. Sentence punctuation may delimit entities.
     const left=input.slice(0,start).match(/\S+$/u)?.[0]??'';
     const right=input.slice(end).match(/^\S+/u)?.[0]??'';
-    if((!left||/^[([{,"'“‘;]+$/u.test(left))&&(!right||/^[.,;:!?)}\]"'”’]+$/u.test(right))&&b.has(start)&&b.has(end))target.push({start,end});
+    if((!left||/^[([{,"'“‘;]+$/u.test(left))&&(!right||/^[.,;:!?،؛؟)}\]"'”’]+$/u.test(right))&&b.has(start)&&b.has(end))target.push({start,end});
   }
   for(const p of patterns)for(const m of input.matchAll(p))add(m.index,m.index+m[0].length);
   for(const term of hostLiterals) {
@@ -78,6 +100,9 @@ export function buildResearchSnapshot(input,locked,snapshotId,{hostLiterals=[]}=
     const [start,end]=m.indices.groups.name;
     // Known exact data wins over overlapping guesses.
     if(!spans.some(r=>r.start<=start&&end<=r.end))add(start,end,suspected);
+  }
+  for(const {start,end} of embeddedLatinCandidates(input)){
+    if(![...spans,...suspected].some(r=>r.start<=start&&end<=r.end))add(start,end,suspected);
   }
   const known=spans.slice();
   spans.push(...suspected);

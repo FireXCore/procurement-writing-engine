@@ -138,6 +138,19 @@ try{
   assert.match(await page.locator('#details').innerText(),/Suspected name ranges quarantined: [1-9]/);
   assert.equal(await page.locator('html').getAttribute('data-analysis-status'),'partial');
   console.log('Catalog-free suspected name quarantine: PASS');
+
+  // Exact user regression: conjunction changes must not expose a possible name.
+  await page.locator('#prose').fill('لطفا قیمت Swagelok و مبلغ ۳۵ میلیون ریال را اعلام کنید.');
+  await page.locator('#run').click();
+  await page.waitForFunction(()=>['complete','error'].includes(document.documentElement.dataset.review),{},{timeout:90000});
+  assert.equal(await page.locator('html').getAttribute('data-review'),'complete');
+  const islandPairs=await page.locator('#findings .finding-pair').allTextContents();
+  assert.ok(islandPairs.includes('لطفا → لطفاً'),JSON.stringify(islandPairs));
+  assert.ok(islandPairs.every(x=>!x.includes('Swagelok')&&!x.includes('۳۵ میلیون ریال')));
+  assert.match(await page.locator('#details').innerText(),/Suspected name ranges quarantined: [1-9]/);
+  assert.equal(await page.locator('html').getAttribute('data-analysis-status'),'partial');
+  console.log('Embedded Latin singleton regression: PASS');
+
   await page.locator('#routing-v2').uncheck();
   console.log('Experimental routing V2 real provider smoke: PASS');
   await page.locator('#prose').fill('Please send teh quotation.');await page.locator('#run').click();await page.locator('#cancel').click();

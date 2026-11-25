@@ -1,0 +1,3 @@
+# Mixed-script singleton guard
+
+A capitalized Latin singleton surrounded by Persian letters in the same line and sentence is a suspected entity, not a confirmed brand. The preview now quarantines it regardless of nearby conjunction or procurement keyword. This may deliberately suppress spelling review of a single English word used in Persian. Multiword English phrases and separate English sentences remain eligible in the tested controls. No neural NER is claimed. The host remains authoritative. The original regression, 42 generated name/context combinations, 4 controls, and the historical 22-case challenge passed isolated JavaScript routing tests. Browser CI is separate. No public release or model changes.
