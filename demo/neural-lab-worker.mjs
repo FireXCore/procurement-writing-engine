@@ -32,7 +32,7 @@ self.onmessage=async({data})=>{
         report('baseline-case',{id:fixture.id,status:result.status,findings,score,ms:Math.round(performance.now()-before)});
       }
       report('baseline-done',{total:baseline});
-    }catch{report('baseline-error');}
+    }catch{report('baseline-error');if(data.protocol==='baseline')return;}
     finally{try{await harper?.dispose?.();}catch{}harper=null;}
     if(data.protocol==='baseline'){report('baseline-only-done');return;}
     stage='runtime';report('progress',{message:'Loading pinned Transformers.js runtime…'});
@@ -57,6 +57,7 @@ self.onmessage=async({data})=>{
       if(typeof prompt!=='string'||prompt.length>16384)throw new Error('Invalid prompt');
       const generated=await pipeline(prompt,{...options,max_new_tokens:192,add_special_tokens:false});
       inferenceReturned=true;observation=inspectGeneration(generated);
+      if(data.protocol==='sentence'&&typeof generated?.[0]?.generated_text==='string'&&generated.length===1&&generated[0].generated_text.isWellFormed()&&generated[0].generated_text.length<=8192)observation={...observation,kind:'sentence-response'};
       return generated;
     };
     const provider=data.protocol==='sentence'?createSentenceProvider({generator:async(messages,options)=>{

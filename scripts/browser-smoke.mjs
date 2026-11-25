@@ -33,6 +33,11 @@ try{
   await page.locator('#neural-consent').uncheck();
   assert.equal(await page.locator('#neural-start').isDisabled(),true);
   assert.deepEqual(external,[],'No external requests before explicit start');
+  await page.locator('#neural-baseline').click();
+  await page.waitForFunction(()=>document.querySelector('#neural-status').textContent.startsWith('Lightweight benchmark completed.'),{},{timeout:90000});
+  assert.equal(await page.locator('#neural-output .neural-case').count(),5);
+  assert.match(await page.locator('#neural-output').innerText(),/Lightweight baseline: exact matches/);
+  assert.deepEqual(external,[],'Baseline-only run must not fetch third-party model assets');
   // Fresh load MUST exercise V2 without selecting any option.
   assert.equal(await page.locator('#routing-v2').isChecked(),true);
   assert.equal(await page.locator('html').getAttribute('data-routing'),'v2');

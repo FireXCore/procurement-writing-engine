@@ -25,6 +25,7 @@ function launch(baselineOnly=false){
       }
       if(data.type==='baseline-only-done'){finish('Lightweight benchmark completed. No neural model loaded.');return;}
       if(data.type==='baseline-error'){
+        if(baselineOnly){finish('Lightweight benchmark failed. No neural model loaded.');return;}
         const p=document.createElement('p');p.textContent='Lightweight baseline unavailable.';output.append(p);return;
       }
       if(data.type==='case'||data.type==='baseline-case'){
