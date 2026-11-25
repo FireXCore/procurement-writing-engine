@@ -1,0 +1,184 @@
+{
+  "schema": 1,
+  "scope": "Post-prototype public challenge; no host catalog; bidi abstention is intentional; isolated JS execution, not model inference",
+  "cases": 22,
+  "pass": 14,
+  "results": [
+    {
+      "id": "quoted-path",
+      "routed": true,
+      "protectedEntity": true,
+      "abstentionExpected": false,
+      "valid": true,
+      "pass": true
+    },
+    {
+      "id": "unc-path",
+      "routed": true,
+      "protectedEntity": true,
+      "abstentionExpected": false,
+      "valid": true,
+      "pass": true
+    },
+    {
+      "id": "unseen-brand",
+      "routed": true,
+      "protectedEntity": true,
+      "abstentionExpected": false,
+      "valid": true,
+      "pass": true
+    },
+    {
+      "id": "unseen-brand-mixed",
+      "routed": true,
+      "protectedEntity": false,
+      "abstentionExpected": false,
+      "valid": true,
+      "pass": false
+    },
+    {
+      "id": "company",
+      "routed": true,
+      "protectedEntity": false,
+      "abstentionExpected": false,
+      "valid": true,
+      "pass": false
+    },
+    {
+      "id": "financial-unseen",
+      "routed": true,
+      "protectedEntity": true,
+      "abstentionExpected": false,
+      "valid": true,
+      "pass": true
+    },
+    {
+      "id": "currency-suffix",
+      "routed": true,
+      "protectedEntity": true,
+      "abstentionExpected": false,
+      "valid": true,
+      "pass": true
+    },
+    {
+      "id": "measurement-unseen",
+      "routed": true,
+      "protectedEntity": false,
+      "abstentionExpected": false,
+      "valid": true,
+      "pass": false
+    },
+    {
+      "id": "measurement-complex",
+      "routed": true,
+      "protectedEntity": true,
+      "abstentionExpected": false,
+      "valid": true,
+      "pass": true
+    },
+    {
+      "id": "compound-unit",
+      "routed": true,
+      "protectedEntity": true,
+      "abstentionExpected": false,
+      "valid": true,
+      "pass": true
+    },
+    {
+      "id": "unseen-standard",
+      "routed": true,
+      "protectedEntity": true,
+      "abstentionExpected": false,
+      "valid": true,
+      "pass": true
+    },
+    {
+      "id": "url-unicode",
+      "routed": true,
+      "protectedEntity": true,
+      "abstentionExpected": false,
+      "valid": true,
+      "pass": true
+    },
+    {
+      "id": "fa-brand",
+      "routed": true,
+      "protectedEntity": true,
+      "abstentionExpected": false,
+      "valid": true,
+      "pass": true
+    },
+    {
+      "id": "fa-brand2",
+      "routed": true,
+      "protectedEntity": false,
+      "abstentionExpected": false,
+      "valid": true,
+      "pass": false
+    },
+    {
+      "id": "fa-money",
+      "routed": true,
+      "protectedEntity": false,
+      "abstentionExpected": false,
+      "valid": true,
+      "pass": false
+    },
+    {
+      "id": "fa-company",
+      "routed": true,
+      "protectedEntity": false,
+      "abstentionExpected": false,
+      "valid": true,
+      "pass": false
+    },
+    {
+      "id": "mixed-token",
+      "routed": true,
+      "protectedEntity": true,
+      "abstentionExpected": false,
+      "valid": true,
+      "pass": true
+    },
+    {
+      "id": "bidi-control",
+      "routed": false,
+      "protectedEntity": true,
+      "abstentionExpected": true,
+      "valid": true,
+      "pass": true
+    },
+    {
+      "id": "combining",
+      "routed": true,
+      "protectedEntity": false,
+      "abstentionExpected": false,
+      "valid": true,
+      "pass": false
+    },
+    {
+      "id": "unknown-identifier",
+      "routed": true,
+      "protectedEntity": true,
+      "abstentionExpected": false,
+      "valid": true,
+      "pass": true
+    },
+    {
+      "id": "date-unseen",
+      "routed": true,
+      "protectedEntity": true,
+      "abstentionExpected": false,
+      "valid": true,
+      "pass": true
+    },
+    {
+      "id": "contract",
+      "routed": true,
+      "protectedEntity": false,
+      "abstentionExpected": false,
+      "valid": true,
+      "pass": false
+    }
+  ]
+}

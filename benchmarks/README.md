@@ -12,3 +12,7 @@ node benchmarks/routing.mjs --gate
 ## Research prototype: local token quarantine
 
 Run `node benchmarks/compare-routing.mjs`. Compare original routing, independent experimental token quarantine, and explicit synthetic host literals. No change to the SDK or demo. The same development corpus is used, so results are not independent generalization evidence. Unrecognized tokens are isolated conservatively; known host terms only are protected by literal matching, not NLP. Unknown brands, adjacent punctuation, sentence context, bidi controls, and adversarial offsets require separate holdout evaluation. UAX #29 revision 49 (2026-09-01): https://www.unicode.org/reports/tr29/tr29-49.html. Candidate next-stage research: https://huggingface.co/onnx-community/gliner2-multi-v1-agent-ONNX (multilingual ONNX entity extraction; exact original offsets and offline weights must be qualified before integration). No model is installed.
+
+### Post-prototype challenge
+
+`node benchmarks/challenge-routing.mjs` measures 22 additional cases without a host catalog; `--gate` requires all to pass. Intentional abstention on the bidi-control case counts as correct. This set was assembled after the prototype, but is now public and must not be presented as a hidden holdout. Failures are retained rather than hidden by loosening protection. The saved report is an isolated JS evaluation; Node CLI and CI require separate verification.
