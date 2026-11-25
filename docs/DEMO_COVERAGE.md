@@ -1,0 +1,5 @@
+# Demo coverage accounting and conservative name candidates
+
+The demo keeps known pattern/host-literal coverage, uncertain name quarantine and other unreviewed units distinct. Counts are disjoint non-whitespace UTF-16 units within the final admitted partition, not linguistic accuracy. Context-limited name candidates use no brand catalog; they are not neural NER or proof of identity. Conservative quarantining can suppress genuine prose, and unknown names outside those cues are not guaranteed protected. The SDK still requires authoritative host regions. No model is bundled or invoked. The historical benchmark remains unchanged.
+
+Existing 22-case public challenge: 22/22 joint success (includes intended bidi abstention). Eight additional synthetic cases: 8/8. This was isolated JS evaluation of classifier, not browser inference. New browser and Node tests must be checked independently. References: https://huggingface.co/docs/transformers.js/en/api/pipelines (grouped token-classification output does not necessarily include original character offsets; a future model bridge must require exact original source anchors).

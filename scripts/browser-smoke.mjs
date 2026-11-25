@@ -124,6 +124,20 @@ try{
   assert.ok(v2Pairs.every(x=>!x.includes('Baker Hughes')&&!x.includes('Bürkert')&&!x.includes('12,450.75')));
   assert.ok((await page.locator('#details').innerText()).includes('Experimental V2'));
   assert.equal(await page.locator('#protected').innerText(),locked);
+
+  // No catalog: name candidates must be quarantined without inventing a brand match.
+  await page.locator('#host-literals').fill('');
+  await page.locator('#prose').fill('Please chek the Rotork offer. لطفا قیمت Swagelok را اعلام کنید.');
+  await page.locator('#run').click();
+  await page.waitForFunction(()=>['complete','error'].includes(document.documentElement.dataset.review),{},{timeout:90000});
+  assert.equal(await page.locator('html').getAttribute('data-review'),'complete');
+  const novelPairs=await page.locator('#findings .finding-pair').allTextContents();
+  assert.ok(novelPairs.includes('chek → check'),JSON.stringify(novelPairs));
+  assert.ok(novelPairs.some(x=>x.includes('لطفا')&&x.includes('لطفاً')),JSON.stringify(novelPairs));
+  assert.ok(novelPairs.every(x=>!x.includes('Rotork')&&!x.includes('Swagelok')));
+  assert.match(await page.locator('#details').innerText(),/Suspected name ranges quarantined: [1-9]/);
+  assert.equal(await page.locator('html').getAttribute('data-analysis-status'),'partial');
+  console.log('Catalog-free suspected name quarantine: PASS');
   await page.locator('#routing-v2').uncheck();
   console.log('Experimental routing V2 real provider smoke: PASS');
   await page.locator('#prose').fill('Please send teh quotation.');await page.locator('#run').click();await page.locator('#cancel').click();

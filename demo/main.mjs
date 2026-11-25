@@ -16,7 +16,7 @@ function syncRoutingMode(){literals.disabled=!v2.checked;mode.textContent=v2.che
 v2.checked=true;syncRoutingMode();
 v2.onchange=()=>{syncRoutingMode();reset();};literals.oninput=()=>reset();
 function finish(result,plan){
-  const state=plan.skipped&&result.status==='complete'?'partial':result.status;
+  const state=(plan.skipped||plan.suspectedRanges)&&result.status==='complete'?'partial':result.status;
   const groups=new Map();
   for(const f of result.findings){
     const key=JSON.stringify([f.start,f.end,f.provider,f.rule,f.category]);
@@ -57,7 +57,7 @@ function finish(result,plan){
   status.textContent=!plan.languages.length?'No eligible prose reviewed — not a clean result.':state+': '+groups.size+' review issue(s); '+result.findings.length+' candidate(s).';
   const languages=plan.languages.map(x=>x==='fa'?'Persian':'English').join(', ')||'None';
   const reasons=[...new Set(result.diagnostics.map(x=>(labels[x.code]||'Reduced review coverage')+(x.provider?' ('+x.provider+')':'')))];
-  details.textContent='Detected language: '+languages+'. '+(plan.experimental?'Experimental V2: explicit names and conservative token quarantine; unclassified tokens skipped: '+plan.skipped+'.':'Protected inline ranges: '+plan.inlineProtected+'. Inferred identifier ranges: '+plan.inferredProtected+'. Unclassified regions skipped: '+plan.skipped+'.')+(Number.isSafeInteger(plan.reviewedUnits)?' Prose routed for review: '+plan.reviewedUnits+'/'+plan.totalUnits+' non-whitespace UTF-16 units (includes protected data in denominator).':'')+(reasons.length?' '+reasons.join('; ')+'.':'')+(!plan.languages.length?' No eligible prose was reviewed.':'');
+  details.textContent='Detected language: '+languages+'. '+(plan.experimental?'Experimental V2: explicit names and conservative token quarantine; unclassified tokens skipped: '+plan.skipped+'. Suspected name ranges quarantined: '+(plan.suspectedRanges??0)+'.':'Protected inline ranges: '+plan.inlineProtected+'. Inferred identifier ranges: '+plan.inferredProtected+'. Unclassified regions skipped: '+plan.skipped+'.')+(Number.isSafeInteger(plan.reviewedUnits)?' Prose routed for review: '+plan.reviewedUnits+'/'+plan.totalUnits+' non-whitespace UTF-16 units (includes protected data in denominator).':'')+(plan.coverage?' Recognized patterns / supplied names: '+plan.coverage.recognized+'; suspected name units: '+plan.coverage.suspected+'; other unreviewed units (including separators): '+plan.coverage.unreviewed+'.':'')+(reasons.length?' '+reasons.join('; ')+'.':'')+(!plan.languages.length?' No eligible prose was reviewed.':'');
   document.documentElement.dataset.analysisStatus=state;
   document.documentElement.dataset.review='complete';
 }
