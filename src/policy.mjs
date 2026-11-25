@@ -26,6 +26,8 @@ export const procurementDeliveryRule = Object.freeze({
 // Deliberately restricted to direct procurement noun phrases with unambiguous following verbs.
 // Not a general subject/verb parser. A direct singular subject + have is checked even if the next word has a typo. Quoted text is skipped; all fixes remain review-only.
 const agreementPatterns = [
+  {pattern:/(?:^|[.!?]\s+)((?:the\s+)?(?:information|equipment|documentation|advice|feedback|evidence)\s+)(are)(?=\s+(?:not\s+)?(?:available|unavailable|incomplete|complete|correct|incorrect|accurate|inaccurate|ready|required|missing|sufficient|insufficient|outdated|relevant|valid|invalid|attached|provided|received|requested|confirmed|verified|approved|being|included|needed)\b)/giu,replacement:'is'},
+  {pattern:/(?:^|[.!?]\s+)((?:the\s+)?(?:information|documentation|advice|feedback|evidence)\s+)(were)(?=\s+(?:not\s+)?(?:available|unavailable|incomplete|complete|correct|incorrect|accurate|inaccurate|ready|required|missing|sufficient|insufficient|outdated|relevant|valid|invalid|attached|provided|received|requested|confirmed|verified|approved|being|included|needed)\b)/giu,replacement:'was'},
   {pattern:/(?:^|[.!?]\s+|\bthat\s+)(each\s+of\s+the\s+(?:suppliers|vendors|manufacturers|contractors|buyers|customers)\s+)(have)(?=\s+(?:confirmed|submitted|provided|sent|received|accepted|rejected|approved|acknowledged)\b)/giu,replacement:'has'},
   {pattern:/(?:^|[.!?]\s+|\bthat\s+)(the\s+equipment\s+)(were)(?=\s+(?:inspected|tested|delivered|installed|received|approved|repaired|shipped|available)\b)/giu,replacement:'was'},
   {pattern:/(?:^|[.!?]\s+|\bthat\s+)(the\s+(?:supplier|vendor|manufacturer|contractor|buyer|customer)\s+)(have)(?=\s+\p{L})/giu,replacement:'has'},

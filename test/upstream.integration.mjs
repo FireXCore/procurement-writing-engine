@@ -97,3 +97,20 @@ test('real engines: mixed languages, lower-case identifiers and contextual first
   });
  }finally{await harper.dispose();}
 });
+
+test('real Textlint mass-noun agreement and negative controls',async()=>{
+ const p=await createTextlint([procurementAgreementRule]);
+ const positives=[["The information are incomplete.","are","is"],["The information are available.","are","is"],["The information are not ready.","are","is"],["The information are missing.","are","is"],["The information are being verified.","are","is"],["The equipment are incomplete.","are","is"],["The equipment are available.","are","is"],["The equipment are not ready.","are","is"],["The equipment are missing.","are","is"],["The equipment are being verified.","are","is"],["The documentation are incomplete.","are","is"],["The documentation are available.","are","is"],["The documentation are not ready.","are","is"],["The documentation are missing.","are","is"],["The documentation are being verified.","are","is"],["The advice are incomplete.","are","is"],["The advice are available.","are","is"],["The advice are not ready.","are","is"],["The advice are missing.","are","is"],["The advice are being verified.","are","is"],["The feedback are incomplete.","are","is"],["The feedback are available.","are","is"],["The feedback are not ready.","are","is"],["The feedback are missing.","are","is"],["The feedback are being verified.","are","is"],["The evidence are incomplete.","are","is"],["The evidence are available.","are","is"],["The evidence are not ready.","are","is"],["The evidence are missing.","are","is"],["The evidence are being verified.","are","is"]];
+ for(const [text,original,replacement] of positives){
+   const r=await createEngine([p]).analyze(snap(text,'en'));
+   assert.equal(r.status,'complete',text);
+   assert.equal(r.findings.length,1,text);
+   assert.equal(r.findings[0].original,original,text);
+   assert.equal(r.findings[0].replacement,replacement,text);
+   assert.equal(text.slice(r.findings[0].start,r.findings[0].end),original,text);
+ }
+ for(const text of ["The information is incomplete.","The documents are incomplete.","The information and documents are incomplete.","The equipment and materials are available.","Please ensure that the information is complete.","If the information were incomplete, we would ask for clarification.","The information provided by the suppliers is incomplete.","The evidence is not approved.","The phrase \"the information are incomplete\" is quoted."]){
+   const r=await createEngine([p]).analyze(snap(text,'en'));
+   assert.equal(r.status,'complete',text);assert.deepEqual(r.findings,[],text);
+ }
+});

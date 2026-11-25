@@ -1,3 +1,7 @@
 # Alternative sentence protocol
 
 User run on Qwen3.5 Q4 WebGPU: lightweight 2/4, model 0/4, 2 blocked. Model produced empty JSON arrays for the two incorrect English sentences and malformed JSON for the Persian correction case. Original JSON remains available as a comparator. Sentence mode asks for only the corrected sentence and derives exact word-token patches, requiring identical token count and separators, at most four edits, no capitalized token edits, and the unchanged contextual safety gate. This deliberately misses many valid grammar and whitespace changes; it is not proof of meaning preservation or a complete grammar engine. No automatic application. Fixed synthetic corpus only. Baseline-only mode does not load remote runtime or model. Model quality for the new protocol is not yet measured. All three direct code test groups passed with simulated output, not ONNX inference.
+
+## Observed decision — 2026-11-25
+
+Qwen3.5 Q4 WebGPU sentence protocol: 0/4 expected edits, 5/5 blocked cases, 723426 ms preparation. JSON protocol: 0/4, 2/5 blocked. Raw responses were collapsed in the supplied screenshot; precise rejection reasons remain unknown. Neither configuration qualifies for interactive review. No further download is required for lightweight validation. The next revision improves bounded declarative mass-noun agreement and reviewed Persian tanwin style vocabulary. These are conservative regression fixes, not a general grammar model. A new 4/4 baseline gate is a regression target, not measured general accuracy.

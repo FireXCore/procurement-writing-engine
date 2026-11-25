@@ -36,7 +36,7 @@ try{
   await page.locator('#neural-baseline').click();
   await page.waitForFunction(()=>document.querySelector('#neural-status').textContent.startsWith('Lightweight benchmark completed.'),{},{timeout:90000});
   assert.equal(await page.locator('#neural-output .neural-case').count(),5);
-  assert.match(await page.locator('#neural-output').innerText(),/Lightweight baseline: exact matches/);
+  assert.match(await page.locator('#neural-output').innerText(),/Lightweight baseline: exact matches 4\/4; missed 0; unexpected 0; incomplete cases 0\./);
   assert.deepEqual(external,[],'Baseline-only run must not fetch third-party model assets');
   // Fresh load MUST exercise V2 without selecting any option.
   assert.equal(await page.locator('#routing-v2').isChecked(),true);
