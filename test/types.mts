@@ -8,3 +8,10 @@ const local:Provider=createLocalLanguageTool();
 // @ts-expect-error invalid language must fail the public type contract
 const invalid:DocumentSnapshot={text:'Hello',snapshotId:'test',regions:[{start:0,end:5,kind:'prose',language:'de'}]};
 void [noApply,local,invalid];
+
+import {resolveSourceRange,protectEntitySpans,createContextualProvider} from '../src/index.mjs';
+const span={unit:'utf16',start:0,end:5,original:'Hello'} as const;
+const safe:DocumentSnapshot=protectEntitySpans(doc,{snapshotId:'sample',spans:[span]});
+const range=resolveSourceRange(doc.text,span);
+const contextual:Provider=createContextualProvider({infer:({text})=>[{unit:'utf16',start:0,end:text.length,original:text,replacement:'Hi',category:'spelling'}]});
+void [safe,range,contextual];

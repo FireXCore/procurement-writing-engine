@@ -28,3 +28,9 @@ export const procurementPolicyRules:readonly TextlintRule[];
 export function languageToolAdapter(check:(text:string,language:Language,signal?:AbortSignal)=>Promise<unknown>):Provider;
 export function ste100Adapter(check:(text:string,signal?:AbortSignal)=>Promise<unknown>):Provider;
 export function valeAdapter(check:(text:string,signal?:AbortSignal)=>Promise<unknown>):Provider;
+
+export interface SourceSpan { readonly unit:'utf16'|'codepoint'|'utf8'; readonly start:number; readonly end:number; readonly original:string }
+export function resolveSourceRange(source:string,span:SourceSpan):Readonly<{start:number;end:number;original:string}>;
+export function protectEntitySpans(document:DocumentSnapshot,batch:{readonly snapshotId:string;readonly spans:readonly SourceSpan[]}):DocumentSnapshot;
+export interface ContextualCandidate extends SourceSpan { readonly category:Category; readonly replacement:string }
+export function createContextualProvider(options:{readonly languages?:readonly Language[];readonly infer:(input:Readonly<{text:string;language:Language;signal?:AbortSignal}>)=>readonly ContextualCandidate[]|Promise<readonly ContextualCandidate[]>}):Provider;

@@ -22,3 +22,11 @@ Do not pass arbitrary paths, providers or rules supplied by users. Never display
 Alpha.3 `normalizerAdapter` may emit multiple independent, nonoverlapping word/phrase patches from a single normalization. The adapter verifies that they reconstruct the exact normalized source and rejects the normalization if any patch violates the existing range/replacement/budget constraints. Do not assume one finding per field. Experimental Virastar remains advisory only. No new public mutation API.
 
 Alpha.4 `createVirastar()` composes upstream cleanup with an explicit local formal-adverb allowlist for missing tanwin (not a Virastar feature). `normalizerAdapter` and the experimental fork are unchanged. No broad diacritic normalization is enabled. All proposals pass the existing bounded diff and engine validation.
+
+## Experimental host integration (research branch)
+
+`resolveSourceRange(source, span)` maps explicit UTF-16, codepoint or UTF-8 half-open offsets to the exact original string, rejects invalid grapheme boundaries and verifies the substring. Never use offsets into normalized or concatenated model input.
+
+`protectEntitySpans(document, {snapshotId, spans})` adds protection to an authoritative partition, never authorizes new prose. A stale or invalid batch throws atomically; callers must fail closed and not analyze the unrefined map. Host must verify live snapshot identity. Entity detection completeness is not guaranteed.
+
+`createContextualProvider({infer, languages})` accepts a trusted host-configured inference callback receiving admitted prose and AbortSignal. It returns structured candidates (unit, start, end, original, replacement, category). Invalid batches are rejected. This is an integration contract, not a bundled model or privacy sandbox. The host must qualify locality, semantic safety and model assets. No automatic model download or dependency added. All suggestions remain review-only.

@@ -4,3 +4,7 @@ export {createVirastar,normalizerAdapter,experimentalVirastarAdapter,VIRASTAR_OP
 export {textlintAdapter,createTextlint} from './adapters/textlint.mjs';
 export {languageToolAdapter,ste100Adapter,valeAdapter} from './adapters/reports.mjs';
 export {procurementDeliveryRule,procurementAgreementRule,procurementPolicyRules} from './policy.mjs';
+
+export {resolveSourceRange} from './offsets.mjs';
+export {protectEntitySpans} from './protection.mjs';
+export {createContextualProvider} from './adapters/contextual.mjs';
