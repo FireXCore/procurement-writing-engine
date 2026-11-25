@@ -20,15 +20,30 @@ start.onclick=()=>{
       if(token!==revision||!data)return;
       if(data.type==='progress'){status.textContent=String(data.message);return;}
       if(data.type==='error'){finish('Blocked at '+data.stage+': '+data.message);return;}
-      if(data.type==='case'){
+      if(data.type==='baseline-done'){
+        const p=document.createElement('p');p.className='fine';p.textContent='Lightweight baseline: exact matches '+data.total.matched+'/4; missed '+data.total.missing+'; unexpected '+data.total.unexpected+'; incomplete cases '+data.total.blocked+'.';output.append(p);return;
+      }
+      if(data.type==='baseline-error'){
+        const p=document.createElement('p');p.textContent='Lightweight baseline unavailable.';output.append(p);return;
+      }
+      if(data.type==='case'||data.type==='baseline-case'){
         const fixture=corpus.find(c=>c.id===data.id);if(!fixture)return;
         const item=document.createElement('div');item.className='neural-case';
-        const title=document.createElement('strong');title.textContent=fixture.id+' — '+data.status+' ('+data.ms+' ms)';
+        const title=document.createElement('strong');title.textContent=(data.type==='baseline-case'?'Lightweight · ':'Neural · ')+fixture.id+' — '+data.status+' ('+data.ms+' ms)';
         const text=document.createElement('p');text.dir='auto';text.textContent=fixture.text;
         const expected=document.createElement('p');expected.dir='auto';expected.textContent='Expected: '+(fixture.expected.map(x=>x.join(' → ')).join(' | ')||'no edits');
-        const result=document.createElement('p');result.dir='auto';result.textContent='Accepted model proposals: '+(data.findings.map(f=>f.original+' → '+f.replacement).join(' | ')||'none');
+        const result=document.createElement('p');result.dir='auto';result.textContent='Accepted review proposals: '+(data.findings.map(f=>f.original+' → '+f.replacement).join(' | ')||'none');
         const score=document.createElement('p');score.textContent='Exact matches: '+data.score.matched+' · Missed: '+data.score.missing+' · Unexpected: '+data.score.unexpected;
-        item.append(title,text,expected,result,score);output.append(item);return;
+        item.append(title,text,expected,result,score);
+        if(data.type==='case'){
+          const diagnostic=document.createElement('p');diagnostic.textContent='Diagnostic: '+(data.reason??data.observation?.kind??'unavailable');item.append(diagnostic);
+          if(data.observation?.preview){
+            const details=document.createElement('details'),summary=document.createElement('summary'),raw=document.createElement('pre');
+            summary.textContent='Raw model output — untrusted, fixed public fixture only';raw.dir='auto';raw.textContent=data.observation.preview;
+            details.append(summary,raw);item.append(details);
+          }
+        }
+        output.append(item);return;
       }
       if(data.type==='done'){
         finish('Completed fixed corpus — '+data.model+' · '+data.device+' · '+data.dtype+' · load '+data.loadMs+' ms. Exact matches: '+data.total.matched+'/4; missed: '+data.total.missing+'; unexpected: '+data.total.unexpected+'; blocked cases: '+data.total.blocked+'. Not a production quality score.');

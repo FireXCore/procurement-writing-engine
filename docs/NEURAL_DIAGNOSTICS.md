@@ -1,0 +1,3 @@
+# Neural lab diagnostics
+
+Initial user WebGPU result for Qwen3.5-0.8B Q4: 0/4 expected edits, 2/5 blocked cases, model preparation 454942 ms. The earlier lab discarded all failure reasons. This revision adds a same-corpus lightweight top-candidate baseline and bounded raw response diagnostics for fixed public fixtures only. It distinguishes missing inference, malformed output, empty arrays, and candidate-schema/anchor/safety rejection; the last category intentionally does not claim a precise validator failure. It does not alter SDK guards or treat valid JSON as proof of correction quality. Raw model output is rendered as text and never executed. No user free text is sent to the neural worker. No real inference result is claimed for this revision.
