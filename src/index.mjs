@@ -8,3 +8,5 @@ export {procurementDeliveryRule,procurementAgreementRule,procurementPolicyRules}
 export {resolveSourceRange} from './offsets.mjs';
 export {protectEntitySpans} from './protection.mjs';
 export {createContextualProvider} from './adapters/contextual.mjs';
+
+export {createLocalGenerationProvider} from './adapters/local-generation.mjs';

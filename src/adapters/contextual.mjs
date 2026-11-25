@@ -1,5 +1,6 @@
 import { LIMITS, validReplacement, eligible } from '../regions.mjs';
 import { resolveSourceRange } from '../offsets.mjs';
+import { validateNeuralEdit } from './neural-safety.mjs';
 
 const contextualCategories=new Set(['spelling','grammar','orthography','style','terminology','technical-writing']);
 // Explicit host-owned inference transport. No model, download or network bundled.
@@ -17,9 +18,11 @@ export function createContextualProvider({infer,languages=['en','fa']}={}) {
     for(const c of raw){
       if(!c||!contextualCategories.has(c.category)||typeof c.replacement!=='string'||typeof c.original!=='string')throw new TypeError('Invalid contextual candidate');
       const r=resolveSourceRange(text,c);
-      if(!r.original||!validReplacement(r.original,c.replacement,language))throw new RangeError('Invalid contextual edit');
+      if(!r.original||!validReplacement(r.original,c.replacement,language)||!validateNeuralEdit(text,{...r,replacement:c.replacement,category:c.category},language))throw new RangeError('Invalid contextual edit');
       out.push(Object.freeze({...r,replacement:c.replacement,category:c.category,rule:'contextual-candidate',message:'Review this contextual suggestion; verify meaning before use.'}));
     }
+    out.sort((a,b)=>a.start-b.start||a.end-b.end);
+    if(out.some((x,i)=>i>0&&x.start<out[i-1].end))throw new RangeError('Overlapping contextual edits');
     return Object.freeze(out);
   }});
 }

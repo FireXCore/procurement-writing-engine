@@ -34,3 +34,7 @@ export function resolveSourceRange(source:string,span:SourceSpan):Readonly<{star
 export function protectEntitySpans(document:DocumentSnapshot,batch:{readonly snapshotId:string;readonly spans:readonly SourceSpan[]}):DocumentSnapshot;
 export interface ContextualCandidate extends SourceSpan { readonly category:Category; readonly replacement:string }
 export function createContextualProvider(options:{readonly languages?:readonly Language[];readonly infer:(input:Readonly<{text:string;language:Language;signal?:AbortSignal}>)=>readonly ContextualCandidate[]|Promise<readonly ContextualCandidate[]>}):Provider;
+
+export interface LocalGenerationMessage { readonly role:'system'|'user'; readonly content:string }
+export interface LocalGenerationOptions { readonly do_sample:false; readonly max_new_tokens:384; readonly num_return_sequences:1; readonly return_full_text:false }
+export function createLocalGenerationProvider(options:{readonly languages?:readonly Language[];readonly generator:(messages:LocalGenerationMessage[],options:LocalGenerationOptions)=>unknown|Promise<unknown>}):Provider;

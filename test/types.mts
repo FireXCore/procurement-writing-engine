@@ -15,3 +15,7 @@ const safe:DocumentSnapshot=protectEntitySpans(doc,{snapshotId:'sample',spans:[s
 const range=resolveSourceRange(doc.text,span);
 const contextual:Provider=createContextualProvider({infer:({text})=>[{unit:'utf16',start:0,end:text.length,original:text,replacement:'Hi',category:'spelling'}]});
 void [safe,range,contextual];
+
+import {createLocalGenerationProvider} from '../src/index.mjs';
+const generated:Provider=createLocalGenerationProvider({generator:async()=>[{generated_text:'[]'}]});
+void generated;
