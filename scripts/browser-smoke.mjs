@@ -23,6 +23,14 @@ try{
   const pkg=JSON.parse(await readFile(new URL('../package.json',import.meta.url),'utf8'));
   assert.equal(await page.locator('#demo-version').innerText(),pkg.version+' · LOCAL DEMO','Demo version must match package.json');
 
+  assert.equal(await page.locator('#neural-start').isDisabled(),true);
+  assert.equal(await page.locator('#neural-consent').isChecked(),false);
+  assert.match(await page.locator('#neural-status').innerText(),/Not started/);
+  await page.locator('#neural-consent').check();
+  assert.equal(await page.locator('#neural-start').isEnabled(),true);
+  await page.locator('#neural-consent').uncheck();
+  assert.equal(await page.locator('#neural-start').isDisabled(),true);
+  assert.deepEqual(external,[],'No external requests before explicit start');
   // Fresh load MUST exercise V2 without selecting any option.
   assert.equal(await page.locator('#routing-v2').isChecked(),true);
   assert.equal(await page.locator('html').getAttribute('data-routing'),'v2');
