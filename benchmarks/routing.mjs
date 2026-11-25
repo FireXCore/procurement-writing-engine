@@ -1,3 +1,4 @@
+import { pathToFileURL } from 'node:url';
 import { buildDemoSnapshot } from '../demo/regions.mjs';
 import { eligible, validateDocument } from '../src/regions.mjs';
 
@@ -33,7 +34,7 @@ const createStats=()=>({cases:0,routed:0,entityProtected:0,joint:0,invalidPartit
 function count(s, v){
  s.cases++;for(const k of ['routed','entityProtected','joint','invalidPartitions','unsafeProse','lockedLeak'])s[k]+=Number(v[k]);
 }
-export function runRoutingBenchmark(){
+export function runRoutingBenchmark(classifier=buildDemoSnapshot){
  const total=createStats(), groups={}, failures=[];
  let id=0;
  for(const [language,sentence,typo] of examples)for(const [category,entity] of entities)
@@ -42,7 +43,7 @@ export function runRoutingBenchmark(){
   const input=suffix?sentence+sep+wrapped:wrapped+sep+sentence;
   const typoStart=(suffix?0:wrapped.length+sep.length)+sentence.indexOf(typo);
   const entityStart=(suffix?sentence.length+sep.length:0)+left.length;
-  const p=buildDemoSnapshot(input,locked,'routing-'+(++id));
+  const p=classifier(input,locked,'routing-'+(++id));
   const {document}=p;
   const prose=document.regions.filter(r=>r.kind==='prose');
   const routed=prose.some(r=>r.language===language&&r.start<=typoStart&&r.end>=typoStart+typo.length);
@@ -57,7 +58,10 @@ export function runRoutingBenchmark(){
  return {schema:1,scope:'synthetic demo routing only',total,groups,failures};
 }
 
+if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
 const report=runRoutingBenchmark();
 console.log(JSON.stringify(report,null,2));
 if(report.total.invalidPartitions||report.total.unsafeProse||report.total.lockedLeak)process.exitCode=1;
 if(process.argv.includes('--gate')&&report.total.joint!==report.total.cases)process.exitCode=1;
+
+}
