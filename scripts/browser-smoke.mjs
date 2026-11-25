@@ -22,6 +22,35 @@ try{
   await page.goto(origin);
   const pkg=JSON.parse(await readFile(new URL('../package.json',import.meta.url),'utf8'));
   assert.equal(await page.locator('#demo-version').innerText(),pkg.version+' · LOCAL DEMO','Demo version must match package.json');
+
+  // Fresh load MUST exercise V2 without selecting any option.
+  assert.equal(await page.locator('#routing-v2').isChecked(),true);
+  assert.equal(await page.locator('html').getAttribute('data-routing'),'v2');
+  assert.ok((await page.locator('#routing-mode').innerText()).includes('Routing V2'));
+  const previewCases=[
+    {id:'engineering',text:'Please chek availability of 2-inch SS316L valves, 150# flange, 0–100°C, 24 VDC, IP67 and IEC 60529.',pairs:['chek → check'],protected:['2-inch','SS316L','150#','0–100°C','24 VDC','IP67','IEC 60529']},
+    {id:'finance',text:'Please confim the total price of EUR 12,450.75, payment terms of 30% T/T and delivery under FCA Hamburg Incoterms 2020.',pairs:['confim → confirm'],protected:['EUR 12,450.75','30% T/T','FCA Hamburg','Incoterms 2020']},
+    {id:'mixed',text:'لطفا قیمت تجهیز Yokogawa EJA110E را اعلام کنید. The manufacturer have recieved our RFQ.',pairs:['لطفا → لطفاً','recieved → received','have → has'],protected:['Yokogawa','EJA110E','RFQ']}
+  ];
+  for(const c of previewCases){
+    await page.locator('#prose').fill(c.text);await page.locator('#run').click();
+    await page.waitForFunction(()=>['complete','error'].includes(document.documentElement.dataset.review),{},{timeout:90000});
+    assert.equal(await page.locator('html').getAttribute('data-review'),'complete',c.id);
+    const pairs=await page.locator('#findings .finding-pair').allTextContents();
+    for(const expected of c.pairs)assert.ok(pairs.includes(expected),c.id+' '+JSON.stringify(pairs));
+    for(const token of c.protected)assert.ok(pairs.every(pair=>!pair.includes(token)),c.id+' '+token);
+    assert.ok((await page.locator('#details').innerText()).includes('Experimental V2'),c.id);
+    assert.equal(await page.locator('#prose').inputValue(),c.text);
+    assert.equal(await page.locator('#protected').innerText(),locked);
+    console.log('Default V2 screenshot regression: '+c.id+' PASS');
+  }
+  // Preserve the existing legacy comparator suite with an explicit switch.
+  await page.locator('#routing-options summary').click();
+  await page.locator('#routing-v2').uncheck();
+  assert.equal(await page.locator('html').getAttribute('data-routing'),'legacy');
+  await page.locator('#routing-options summary').click();
+  await page.locator('#prose').fill('Please send teh quotation as soon as possible.');
+
   await page.locator('#run').click();
   await page.waitForFunction(()=>['complete','error'].includes(document.documentElement.dataset.review),{},{timeout:90000});
   assert.equal(await page.locator('html').getAttribute('data-review'),'complete');

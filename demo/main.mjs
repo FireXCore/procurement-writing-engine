@@ -2,7 +2,7 @@ import {buildDemoSnapshot} from './regions.mjs';
 import {buildResearchSnapshot} from './routing-v2.mjs';
 const el=id=>document.getElementById(id);
 const prose=el('prose'),status=el('status'),findings=el('findings'),run=el('run'),cancel=el('cancel'),details=el('details');
-const v2=el('routing-v2'),literals=el('host-literals');
+const v2=el('routing-v2'),literals=el('host-literals'),mode=el('routing-mode');
 let worker=null,timer,revision=0;
 const labels={'unsafe-region':'Unsafe or mixed-script prose skipped','no-provider':'No language provider','budget-exhausted':'Execution budget reached','provider-timeout':'Provider timed out','provider-failed':'Provider failed','invalid-provider-result':'Invalid provider response','provider-limit':'Provider finding limit reached','rejected-finding':'Unsafe or invalid proposal rejected','finding-limit':'Global finding limit reached','invalid-region-map':'Invalid region map','engine-retired':'Engine retired'};
 function reset(message='Ready for review. Language is detected automatically.'){
@@ -12,7 +12,9 @@ function reset(message='Ready for review. Language is detected automatically.'){
 }
 
 prose.oninput=()=>reset();cancel.onclick=()=>reset('Review cancelled.');
-v2.onchange=()=>{literals.disabled=!v2.checked;reset();};literals.oninput=()=>reset();
+function syncRoutingMode(){literals.disabled=!v2.checked;mode.textContent=v2.checked?'Active mode: Routing V2 · qualification preview':'Active mode: Legacy Alpha 7 · comparison only';document.documentElement.dataset.routing=v2.checked?'v2':'legacy';}
+v2.checked=true;syncRoutingMode();
+v2.onchange=()=>{syncRoutingMode();reset();};literals.oninput=()=>reset();
 function finish(result,plan){
   const state=plan.skipped&&result.status==='complete'?'partial':result.status;
   const groups=new Map();
@@ -52,7 +54,7 @@ function finish(result,plan){
     }
     findings.append(item);
   }
-  status.textContent=state+': '+groups.size+' review issue(s); '+result.findings.length+' candidate(s).';
+  status.textContent=!plan.languages.length?'No eligible prose reviewed — not a clean result.':state+': '+groups.size+' review issue(s); '+result.findings.length+' candidate(s).';
   const languages=plan.languages.map(x=>x==='fa'?'Persian':'English').join(', ')||'None';
   const reasons=[...new Set(result.diagnostics.map(x=>(labels[x.code]||'Reduced review coverage')+(x.provider?' ('+x.provider+')':'')))];
   details.textContent='Detected language: '+languages+'. '+(plan.experimental?'Experimental V2: explicit names and conservative token quarantine; unclassified tokens skipped: '+plan.skipped+'.':'Protected inline ranges: '+plan.inlineProtected+'. Inferred identifier ranges: '+plan.inferredProtected+'. Unclassified regions skipped: '+plan.skipped+'.')+(Number.isSafeInteger(plan.reviewedUnits)?' Prose routed for review: '+plan.reviewedUnits+'/'+plan.totalUnits+' non-whitespace UTF-16 units (includes protected data in denominator).':'')+(reasons.length?' '+reasons.join('; ')+'.':'')+(!plan.languages.length?' No eligible prose was reviewed.':'');
