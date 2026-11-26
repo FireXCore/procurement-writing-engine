@@ -94,7 +94,15 @@ export function buildResearchSnapshot(input,locked,snapshotId,{hostLiterals=[]}=
   for(const term of hostLiterals) {
     // Literal matching without regex construction or Unicode normalization.
     let from=0, at;
-    while((at=input.indexOf(term,from))!==-1){add(at,at+term.length);from=at+term.length;}
+    while((at=input.indexOf(term,from))!==-1){
+      // Explicit host protection outranks heuristics. Include touching tokens,
+      // including substring matches, rather than exposing a protected literal.
+      let start=at,end=at+term.length;
+      while(start>0&&!/\s/u.test(input[start-1]))start--;
+      while(end<input.length&&!/\s/u.test(input[end]))end++;
+      if(!b.has(start)||!b.has(end))return fallback();
+      spans.push({start,end});from=at+1;
+    }
   }
   for(const p of namePatterns)for(const m of input.matchAll(p)){
     const [start,end]=m.indices.groups.name;
