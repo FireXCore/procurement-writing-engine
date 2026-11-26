@@ -24,3 +24,6 @@ import {createTransformersProvider,type TransformersRuntime} from '../src/index.
 const localRuntime:TransformersRuntime={env:{allowLocalModels:true,allowRemoteModels:false},pipeline:async()=>null};
 const initTransformer=()=>createTransformersProvider({runtime:localRuntime,model:'pwe/qwen-text'});
 void initTransformer;
+
+import {createAdaptiveReview,createPersianLexiconProvider,type PreferenceProfile} from '../src/index.mjs';
+const preferences=createAdaptiveReview();const profile:PreferenceProfile=preferences.exportProfile();const dictionaryProvider:Provider=createPersianLexiconProvider({words:['مشخصات']});void [profile,dictionaryProvider];

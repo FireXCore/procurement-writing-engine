@@ -12,3 +12,6 @@ export {createContextualProvider} from './adapters/contextual.mjs';
 export {createLocalGenerationProvider} from './adapters/local-generation.mjs';
 
 export {createTransformersProvider} from './adapters/transformers-runtime.mjs';
+
+export {createAdaptiveReview} from './adaptive-review.mjs';
+export {createPersianLexiconProvider} from './adapters/persian-lexicon.mjs';

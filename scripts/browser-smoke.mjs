@@ -59,6 +59,22 @@ try{
     assert.equal(await page.locator('#protected').innerText(),locked);
     console.log('Default V2 screenshot regression: '+c.id+' PASS');
   }
+  assert.equal(await page.locator('#learn-local').isChecked(),false);
+  await page.locator('#learning-options summary').click();
+  await page.locator('#learn-local').check();
+  for(let round=0;round<2;round++){
+    await page.locator('#prose').fill('Please chek the quotation.');
+    await page.locator('#run').click();
+    await page.waitForFunction(()=>document.documentElement.dataset.review==='complete',{},{timeout:90000});
+    await page.locator('#findings li').first().getByRole('button',{name:'Rank lower next time'}).first().click();
+    assert.match(await page.locator('#learn-status').innerText(),/Preference recorded/);
+    assert.equal(await page.locator('#prose').inputValue(),'Please chek the quotation.');
+  }
+  await page.locator('#forget-local').click();
+  assert.match(await page.locator('#learn-status').innerText(),/cleared/);
+  await page.locator('#learn-local').uncheck();
+  assert.equal(await page.locator('#findings li').count(),0);
+  await page.locator('#learning-options summary').click();
   // Preserve the existing legacy comparator suite with an explicit switch.
   await page.locator('#routing-options summary').click();
   await page.locator('#routing-v2').uncheck();

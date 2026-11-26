@@ -1,12 +1,17 @@
+import {createAdaptiveReview} from '../src/adaptive-review.mjs';
 import {buildDemoSnapshot} from './regions.mjs';
 import {buildResearchSnapshot} from './routing-v2.mjs';
 const el=id=>document.getElementById(id);
 const prose=el('prose'),status=el('status'),findings=el('findings'),run=el('run'),cancel=el('cancel'),details=el('details');
 const v2=el('routing-v2'),literals=el('host-literals'),mode=el('routing-mode');
 let worker=null,timer,revision=0;
+const adaptive=createAdaptiveReview(),learn=el('learn-local'),forget=el('forget-local'),learnStatus=el('learn-status');
+learn.checked=false;
+learn.onchange=()=>{adaptive.clear();learnStatus.textContent=learn.checked?'Session-only preferences enabled.':'Preferences disabled and cleared.';reset();};
+forget.onclick=()=>{adaptive.clear();learnStatus.textContent='Session preferences cleared.';reset();};
 const labels={'unsafe-region':'Unsafe or mixed-script prose skipped','no-provider':'No language provider','budget-exhausted':'Execution budget reached','provider-timeout':'Provider timed out','provider-failed':'Provider failed','invalid-provider-result':'Invalid provider response','provider-limit':'Provider finding limit reached','rejected-finding':'Unsafe or invalid proposal rejected','finding-limit':'Global finding limit reached','invalid-region-map':'Invalid region map','engine-retired':'Engine retired'};
 function reset(message='Ready for review. Language is detected automatically.'){
-  ++revision;worker?.terminate();worker=null;clearTimeout(timer);findings.replaceChildren();details.textContent='';status.textContent=message;run.disabled=false;cancel.disabled=true;
+  adaptive.invalidate();++revision;worker?.terminate();worker=null;clearTimeout(timer);findings.replaceChildren();details.textContent='';status.textContent=message;run.disabled=false;cancel.disabled=true;
   document.documentElement.dataset.review='idle';
   delete document.documentElement.dataset.analysisStatus;
 }
@@ -17,13 +22,15 @@ v2.checked=true;syncRoutingMode();
 v2.onchange=()=>{syncRoutingMode();reset();};literals.oninput=()=>reset();
 function finish(result,plan){
   const state=(plan.skipped||plan.suspectedRanges)&&result.status==='complete'?'partial':result.status;
+  const session=learn.checked&&['complete','partial'].includes(result.status)?adaptive.prepare(plan.document,result):null;
   const groups=new Map();
   for(const f of result.findings){
     const key=JSON.stringify([f.start,f.end,f.provider,f.rule,f.category]);
     if(!groups.has(key))groups.set(key,[]);
     groups.get(key).push(f);
   }
-  for(const group of groups.values()){
+  const shown=session?session.groups.map(g=>g.candidates.map(c=>c.finding)):[...groups.values()];
+  for(const [groupIndex,group] of shown.entries()){
     const f=group[0];
     const language=plan.document.regions.find(r=>r.kind==='prose'&&f.start>=r.start&&f.end<=r.end)?.language;
     const item=document.createElement('li'),pair=document.createElement('div');
@@ -39,22 +46,33 @@ function finish(result,plan){
     }
     const message=document.createElement('div');message.className='finding-message';message.dir='ltr';message.textContent=f.message+' ['+f.provider+']';
     item.append(pair,message);
+    function feedback(parent,candidateIndex){
+      if(!session?.groups[groupIndex]?.candidates[candidateIndex]?.learnable)return;
+      const controls=document.createElement('div');controls.className='feedback-controls';
+      for(const [decision,label] of [['prefer','Prefer next time'],['reject','Rank lower next time']]){
+        const b=document.createElement('button');b.type='button';b.className='secondary';b.textContent=label;b.onclick=()=>{
+          if(session.record(groupIndex,candidateIndex,decision)){learnStatus.textContent='Preference recorded for later reviews. Text unchanged.';for(const control of item.querySelectorAll('.feedback-controls button'))control.disabled=true;}
+        };controls.append(b);
+      }
+      parent.append(controls);
+    }
+    feedback(item,0);
     if(group.length>1){
       const alternatives=document.createElement('details');
       const summary=document.createElement('summary');
       summary.textContent=(group.length-1)+' alternative(s) — review only';
       alternatives.append(summary);
-      for(const other of group.slice(1)){
+      for(const [i,other] of group.slice(1).entries()){
         if(other.replacement===undefined)continue;
         const alternative=document.createElement('div');alternative.className='finding-pair';alternative.dir='ltr';
         alternative.append(term(other.original,'original'),document.createTextNode(' → '),term(other.replacement,'replacement'));
-        alternatives.append(alternative);
+        alternatives.append(alternative);feedback(alternatives,i+1);
       }
       item.append(alternatives);
     }
     findings.append(item);
   }
-  status.textContent=!plan.languages.length?'No eligible prose reviewed — not a clean result.':state+': '+groups.size+' review issue(s); '+result.findings.length+' candidate(s).';
+  status.textContent=!plan.languages.length?'No eligible prose reviewed — not a clean result.':state+': '+shown.length+' review issue(s); '+result.findings.length+' candidate(s).';
   const languages=plan.languages.map(x=>x==='fa'?'Persian':'English').join(', ')||'None';
   const reasons=[...new Set(result.diagnostics.map(x=>(labels[x.code]||'Reduced review coverage')+(x.provider?' ('+x.provider+')':'')))];
   details.textContent='Detected language: '+languages+'. '+(plan.experimental?'Experimental V2: explicit names and conservative token quarantine; unclassified tokens skipped: '+plan.skipped+'. Suspected name ranges quarantined: '+(plan.suspectedRanges??0)+'.':'Protected inline ranges: '+plan.inlineProtected+'. Inferred identifier ranges: '+plan.inferredProtected+'. Unclassified regions skipped: '+plan.skipped+'.')+(Number.isSafeInteger(plan.reviewedUnits)?' Prose routed for review: '+plan.reviewedUnits+'/'+plan.totalUnits+' non-whitespace UTF-16 units (includes protected data in denominator).':'')+(plan.coverage?' Recognized patterns / supplied names: '+plan.coverage.recognized+'; suspected name units: '+plan.coverage.suspected+'; other unreviewed units (including separators): '+plan.coverage.unreviewed+'.':'')+(reasons.length?' '+reasons.join('; ')+'.':'')+(!plan.languages.length?' No eligible prose was reviewed.':'');
@@ -81,7 +99,7 @@ run.onclick=()=>{
       if(token!==revision||input!==prose.value)return;
       if(!data.ok||data.report.snapshotId!==plan.document.snapshotId||data.report.apply!==false){fail();return;}
       worker?.terminate();worker=null;clearTimeout(timer);run.disabled=false;cancel.disabled=true;
-      finish(data.report,plan);
+      try{finish(data.report,plan);}catch{fail();}
     };
     worker.onerror=fail;worker.onmessageerror=fail;timer=setTimeout(fail,60000);
     worker.postMessage({document:plan.document});

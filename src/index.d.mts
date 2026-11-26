@@ -46,3 +46,11 @@ export interface TransformersRuntime {
   readonly InterruptableStoppingCriteria?:new()=>{interrupt():void};
 }
 export function createTransformersProvider(options:{readonly runtime:TransformersRuntime;readonly model:string;readonly device?:'webgpu'|'wasm';readonly dtype?:LocalModelPrecision;readonly fallbackToWasm?:boolean;readonly wasmDtype?:LocalModelPrecision;readonly languages?:readonly Language[]}):Promise<{readonly provider:Provider;readonly device:'webgpu'|'wasm';readonly dtype:LocalModelPrecision;dispose():Promise<void>}>;
+
+export interface PreferenceRecord { readonly language:Language; readonly original:string; readonly replacement:string; readonly accepted:number; readonly rejected:number }
+export interface PreferenceProfile { readonly version:1; readonly records:readonly PreferenceRecord[] }
+export interface ReviewCandidate { readonly finding:Finding; readonly sources:readonly Readonly<{provider:string;rule:string;message:string}>[]; readonly learnable:boolean; readonly preference:number }
+export interface AdaptiveReviewSession { readonly groups:readonly Readonly<{language:Language;candidates:readonly ReviewCandidate[]}>[];record(groupIndex:number,candidateIndex:number,decision:'prefer'|'reject'):boolean }
+export interface AdaptiveReview { prepare(document:DocumentSnapshot,analysis:Analysis):AdaptiveReviewSession;invalidate():void;exportProfile():PreferenceProfile;clear():void }
+export function createAdaptiveReview(options?:{readonly profile?:PreferenceProfile}):AdaptiveReview;
+export function createPersianLexiconProvider(options:{readonly words:readonly string[]}):Provider;
