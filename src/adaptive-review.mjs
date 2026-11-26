@@ -40,7 +40,7 @@ export function createAdaptiveReview({profile}={}){
       !['complete','partial'].includes(analysis.status)||!Array.isArray(analysis.findings)||analysis.findings.length>LIMITS.findings)throw new TypeError('Invalid review snapshot');
     const current=epoch,b=boundaries(document.text),groups=new Map();
     for(const f of analysis.findings){
-      if(!f||!provider.test(f.provider??'')||!rule.test(f.rule??'')||!kinds.has(f.category)||!plain(f.message)||
+      if(!f||typeof f.provider!=='string'||typeof f.rule!=='string'||!provider.test(f.provider)||!rule.test(f.rule)||!kinds.has(f.category)||!plain(f.message)||
         !validRange(document.text,f.start,f.end,b)||document.text.slice(f.start,f.end)!==f.original)throw new TypeError('Invalid review finding');
       const region=document.regions.find(r=>r.kind==='prose'&&f.start>=r.start&&f.end<=r.end&&
         (f.start!==f.end||f.start>r.start&&f.end<r.end));

@@ -114,3 +114,21 @@ test('real Textlint mass-noun agreement and negative controls',async()=>{
    assert.equal(r.status,'complete',text);assert.deepEqual(r.findings,[],text);
  }
 });
+
+test('real pinned Lilak dictionary root provider integration',async()=>{
+ const {default:dictionary}=await import('dictionary-fa');
+ const {parseDictionaryRoots}=await import('../demo/dictionary-roots.mjs');
+ const {createPersianLexiconProvider}=await import('../src/index.mjs');
+ const words=parseDictionaryRoots(dictionary.dic.toString('utf8'));
+ assert.ok(words.length>=1000);
+ assert.ok(words.includes('مشخصات'));
+ const provider=createPersianLexiconProvider({words});
+ const text='مشخسات';
+ const result=await createEngine([provider]).analyze({text,snapshotId:'lilak-real',regions:[{start:0,end:text.length,kind:'prose',language:'fa'}]});
+ assert.equal(result.status,'complete');
+ assert.ok(result.findings.some(f=>f.original===text&&f.replacement==='مشخصات'));
+ assert.equal(result.apply,false);
+ const clean=provider.check('مشخصات','fa');
+ assert.deepEqual(clean,[]);
+ console.log('Lilak pinned simple roots:',words.length);
+});

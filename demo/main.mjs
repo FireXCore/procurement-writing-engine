@@ -1,14 +1,32 @@
 import {createAdaptiveReview} from '../src/adaptive-review.mjs';
+import {readPreferences,writePreferences,removePreferences} from './preference-storage.mjs';
 import {buildDemoSnapshot} from './regions.mjs';
 import {buildResearchSnapshot} from './routing-v2.mjs';
 const el=id=>document.getElementById(id);
 const prose=el('prose'),status=el('status'),findings=el('findings'),run=el('run'),cancel=el('cancel'),details=el('details');
 const v2=el('routing-v2'),literals=el('host-literals'),mode=el('routing-mode');
 let worker=null,timer,revision=0;
-const adaptive=createAdaptiveReview(),learn=el('learn-local'),forget=el('forget-local'),learnStatus=el('learn-status');
-learn.checked=false;
-learn.onchange=()=>{adaptive.clear();learnStatus.textContent=learn.checked?'Session-only preferences enabled.':'Preferences disabled and cleared.';reset();};
-forget.onclick=()=>{adaptive.clear();learnStatus.textContent='Session preferences cleared.';reset();};
+let adaptive=createAdaptiveReview();
+const learn=el('learn-local'),remember=el('remember-local'),forget=el('forget-local'),learnStatus=el('learn-status'),lexicon=el('lexicon-local');
+learn.checked=false;remember.checked=false;remember.disabled=true;lexicon.checked=false;
+function clearSaved(){try{removePreferences(localStorage);return true;}catch{return false;}}
+learn.onchange=()=>{
+  adaptive.clear();remember.disabled=!learn.checked;remember.checked=false;
+  if(!learn.checked)learnStatus.textContent=clearSaved()?'Preferences disabled and cleared.':'Session cleared; browser storage could not be cleared.';
+  else learnStatus.textContent='Session-only preferences enabled.';
+  reset();
+};
+remember.onchange=()=>{
+  if(!learn.checked){remember.checked=false;return;}
+  adaptive.invalidate();
+  if(remember.checked){
+    try{adaptive=readPreferences(localStorage);learnStatus.textContent='Saved preferences loaded; explicit votes are saved in this browser.';}
+    catch{remember.checked=false;learnStatus.textContent='Saved profile unavailable or invalid. Use Clear preferences to remove it.';}
+  }else{learnStatus.textContent=clearSaved()?'Saved profile deleted; session preferences retained.':'Browser storage could not be cleared.';}
+  reset();
+};
+forget.onclick=()=>{adaptive.clear();learnStatus.textContent=clearSaved()?'Session and saved preferences cleared.':'Session cleared; browser storage could not be cleared.';reset();};
+lexicon.onchange=()=>reset();
 const labels={'unsafe-region':'Unsafe or mixed-script prose skipped','no-provider':'No language provider','budget-exhausted':'Execution budget reached','provider-timeout':'Provider timed out','provider-failed':'Provider failed','invalid-provider-result':'Invalid provider response','provider-limit':'Provider finding limit reached','rejected-finding':'Unsafe or invalid proposal rejected','finding-limit':'Global finding limit reached','invalid-region-map':'Invalid region map','engine-retired':'Engine retired'};
 function reset(message='Ready for review. Language is detected automatically.'){
   adaptive.invalidate();++revision;worker?.terminate();worker=null;clearTimeout(timer);findings.replaceChildren();details.textContent='';status.textContent=message;run.disabled=false;cancel.disabled=true;
@@ -51,7 +69,7 @@ function finish(result,plan){
       const controls=document.createElement('div');controls.className='feedback-controls';
       for(const [decision,label] of [['prefer','Prefer next time'],['reject','Rank lower next time']]){
         const b=document.createElement('button');b.type='button';b.className='secondary';b.textContent=label;b.onclick=()=>{
-          if(session.record(groupIndex,candidateIndex,decision)){learnStatus.textContent='Preference recorded for later reviews. Text unchanged.';for(const control of item.querySelectorAll('.feedback-controls button'))control.disabled=true;}
+          if(session.record(groupIndex,candidateIndex,decision)){learnStatus.textContent='Preference recorded for later reviews. Text unchanged.';if(remember.checked){try{writePreferences(localStorage,adaptive);}catch{remember.checked=false;const cleared=clearSaved();learnStatus.textContent=cleared?'Preference recorded in memory; saving failed and old profile was cleared.':'Preference recorded in memory; saving and clearing old profile failed.';}}for(const control of item.querySelectorAll('.feedback-controls button'))control.disabled=true;}
         };controls.append(b);
       }
       parent.append(controls);
@@ -75,7 +93,7 @@ function finish(result,plan){
   status.textContent=!plan.languages.length?'No eligible prose reviewed — not a clean result.':state+': '+shown.length+' review issue(s); '+result.findings.length+' candidate(s).';
   const languages=plan.languages.map(x=>x==='fa'?'Persian':'English').join(', ')||'None';
   const reasons=[...new Set(result.diagnostics.map(x=>(labels[x.code]||'Reduced review coverage')+(x.provider?' ('+x.provider+')':'')))];
-  details.textContent='Detected language: '+languages+'. '+(plan.experimental?'Experimental V2: explicit names and conservative token quarantine; unclassified tokens skipped: '+plan.skipped+'. Suspected name ranges quarantined: '+(plan.suspectedRanges??0)+'.':'Protected inline ranges: '+plan.inlineProtected+'. Inferred identifier ranges: '+plan.inferredProtected+'. Unclassified regions skipped: '+plan.skipped+'.')+(Number.isSafeInteger(plan.reviewedUnits)?' Prose routed for review: '+plan.reviewedUnits+'/'+plan.totalUnits+' non-whitespace UTF-16 units (includes protected data in denominator).':'')+(plan.coverage?' Recognized patterns / supplied names: '+plan.coverage.recognized+'; suspected name units: '+plan.coverage.suspected+'; other unreviewed units (including separators): '+plan.coverage.unreviewed+'.':'')+(reasons.length?' '+reasons.join('; ')+'.':'')+(!plan.languages.length?' No eligible prose was reviewed.':'');
+  details.textContent='Detected language: '+languages+'. '+(plan.experimental?'Experimental V2: explicit names and conservative token quarantine; unclassified tokens skipped: '+plan.skipped+'. Suspected name ranges quarantined: '+(plan.suspectedRanges??0)+'.':'Protected inline ranges: '+plan.inlineProtected+'. Inferred identifier ranges: '+plan.inferredProtected+'. Unclassified regions skipped: '+plan.skipped+'.')+(Number.isSafeInteger(plan.reviewedUnits)?' Prose routed for review: '+plan.reviewedUnits+'/'+plan.totalUnits+' non-whitespace UTF-16 units (includes protected data in denominator).':'')+(plan.coverage?' Recognized patterns / supplied names: '+plan.coverage.recognized+'; suspected name units: '+plan.coverage.suspected+'; other unreviewed units (including separators): '+plan.coverage.unreviewed+'.':'')+(lexicon.checked&&plan.languages.includes('fa')?' Optional Lilak root dictionary enabled; suggestions may include false positives on inflected words and names.':'')+(reasons.length?' '+reasons.join('; ')+'.':'')+(!plan.languages.length?' No eligible prose was reviewed.':'');
   document.documentElement.dataset.analysisStatus=state;
   document.documentElement.dataset.review='complete';
 }
@@ -102,6 +120,6 @@ run.onclick=()=>{
       try{finish(data.report,plan);}catch{fail();}
     };
     worker.onerror=fail;worker.onmessageerror=fail;timer=setTimeout(fail,60000);
-    worker.postMessage({document:plan.document});
+    worker.postMessage({document:plan.document,lexicon:lexicon.checked});
   }catch{fail();}
 };

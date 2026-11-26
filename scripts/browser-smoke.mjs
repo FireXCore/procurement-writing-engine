@@ -75,6 +75,39 @@ try{
   await page.locator('#learn-local').uncheck();
   assert.equal(await page.locator('#findings li').count(),0);
   await page.locator('#learning-options summary').click();
+  // Optional dictionary is loaded only after selection; same-origin assets only.
+  assert.equal(await page.locator('#lexicon-local').isChecked(),false);
+  await page.locator('#lexicon-options summary').click();
+  await page.locator('#lexicon-local').check();
+  await page.locator('#prose').fill('مشخسات');
+  await page.locator('#run').click();
+  await page.waitForFunction(()=>['complete','error'].includes(document.documentElement.dataset.review),{},{timeout:90000});
+  assert.equal(await page.locator('html').getAttribute('data-review'),'complete');
+  assert.ok((await page.locator('#findings .finding-pair').allTextContents()).includes('مشخسات → مشخصات'));
+  assert.match(await page.locator('#details').innerText(),/Lilak root dictionary enabled/);
+  assert.deepEqual(external,[]);
+  await page.locator('#lexicon-local').uncheck();
+  await page.locator('#lexicon-options summary').click();
+  // Persistence requires explicit opt-in and a genuine vote.
+  await page.locator('#learning-options summary').click();
+  await page.locator('#learn-local').check();
+  await page.locator('#remember-local').check();
+  await page.locator('#prose').fill('Please chek the quotation.');
+  await page.locator('#run').click();
+  await page.waitForFunction(()=>document.documentElement.dataset.review==='complete',{},{timeout:90000});
+  await page.locator('#findings li').first().getByRole('button',{name:'Prefer next time'}).first().click();
+  const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('pwe:synthetic-demo:preferences:v1')));
+  assert.equal(saved.records.length,1);
+  await page.reload();
+  assert.equal(await page.locator('#learn-local').isChecked(),false);
+  await page.locator('#learning-options summary').click();
+  await page.locator('#learn-local').check();
+  await page.locator('#remember-local').check();
+  assert.match(await page.locator('#learn-status').innerText(),/Saved preferences loaded/);
+  await page.locator('#forget-local').click();
+  assert.equal(await page.evaluate(()=>localStorage.getItem('pwe:synthetic-demo:preferences:v1')),null);
+  await page.locator('#learn-local').uncheck();
+  await page.locator('#learning-options summary').click();
   // Preserve the existing legacy comparator suite with an explicit switch.
   await page.locator('#routing-options summary').click();
   await page.locator('#routing-v2').uncheck();
