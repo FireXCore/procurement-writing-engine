@@ -134,3 +134,44 @@ test('real pinned Lilak dictionary root provider integration',async()=>{
  assert.deepEqual(clean,[]);
  console.log('Lilak pinned simple roots:',words.length);
 });
+
+test('1024 synthetic bilingual spelling challenges with real pinned providers', {timeout:180000}, async()=>{
+ const {binaryInlined}=await import('harper.js/binaryInlined');
+ const {default:dictionary}=await import('dictionary-fa');
+ const {parseDictionaryEvidence,packDictionaryEvidence,unpackDictionaryEvidence}=await import('../demo/dictionary-roots.mjs');
+ const {createPersianLexiconProvider}=await import('../src/index.mjs');
+ const {buildResearchSnapshot}=await import('../demo/routing-v2.mjs');
+ const {mkdirSync,writeFileSync}=await import('node:fs');
+ const en=[['quoutation','quotation'],['delivrey','delivery'],['specfication','specification'],['waranty','warranty'],['paymant','payment'],['inovice','invoice'],['certifcate','certificate'],['availablity','availability'],['manufaturer','manufacturer'],['shipmnt','shipment'],['documnt','document'],['commerical','commercial'],['techncial','technical'],['reciept','receipt'],['appruval','approval'],['suplier','supplier']];
+ const fa=[['مشخسات','مشخصات'],['تجیهزات','تجهیزات'],['پشنهاد','پیشنهاد'],['مستندت','مستندات'],['قراداد','قرارداد'],['محمولهه','محموله'],['پردخات','پرداخت'],['تحویلل','تحویل'],['گزارشس','گزارش'],['تضیمین','تضمین'],['ضمانتت','ضمانت'],['تاییید','تأیید'],['دستگها','دستگاه'],['استعالام','استعلام'],['درخاست','درخواست'],['بازرسیی','بازرسی']];
+ const enFrames=['Please verify the {w}.','Please confirm the {w}.','We received the {w}.','We reviewed the {w}.','The {w} is required.','The {w} was received.','Please update the {w}.','Please send the {w}.','We await the {w}.','Please check the {w}.','Please review the {w}.','Please attach the {w}.','Please provide the {w}.','We need the {w}.','Please submit the {w}.','Please prepare the {w}.'];
+ const faFrames=['لطفاً {w} را بررسی کنید.','لطفاً {w} را ارسال کنید.','لطفاً {w} را تأیید کنید.','لطفاً {w} را اعلام کنید.','{w} را دریافت کردیم.','{w} را بررسی کردیم.','{w} ارسال شد.','{w} لازم است.','{w} دریافت شد.','لطفاً درباره {w} اطلاع دهید.','لطفاً {w} را پیگیری کنید.','لطفاً {w} را آماده کنید.','لطفاً {w} را ارائه کنید.','لطفاً {w} را تکمیل کنید.','لطفاً {w} را ارسال فرمایید.','لطفاً {w} را بررسی فرمایید.'];
+ const counts={},failures=[];
+ let harper;
+ try{
+  harper=await createHarper({binary:binaryInlined,worker:false});
+  const evidence=unpackDictionaryEvidence(packDictionaryEvidence(parseDictionaryEvidence(dictionary.dic.toString('utf8'),dictionary.aff.toString('utf8'))));
+  const e=createEngine([harper.provider,await createTextlint(procurementPolicyRules),await createVirastar(),createPersianLexiconProvider(evidence)]);
+  let total=0;
+  for(const [lang,pairs,frames] of [['en',en,enFrames],['fa',fa,faFrames]]){
+   const m=counts[lang]={cases:0,positive:0,control:0,top1:0,any:0,extraCases:0,controlWithEdits:0,partial:0};
+   for(const [wrong,right] of pairs)for(const frame of frames)for(const dirty of [true,false]){
+    const text=frame.replace('{w}',dirty?wrong:right),p=buildResearchSnapshot(text,'LOCKED 123','quality:'+total),r=await e.analyze(p.document);total++;m.cases++;
+    assert.equal(r.apply,false);
+    assert.ok(r.findings.every(f=>p.document.regions.some(x=>x.kind==='prose'&&f.start>=x.start&&f.end<=x.end)&&p.document.text.slice(f.start,f.end)===f.original));
+    if(r.status!=='complete'||p.skipped||p.suspectedRanges)m.partial++;
+    const edits=r.findings.filter(f=>f.replacement!==undefined),first=new Map();
+    for(const f of edits){const k=JSON.stringify([f.start,f.end,f.provider,f.rule]);if(!first.has(k))first.set(k,f);}
+    const top=[...first.values()],at=text.indexOf(wrong),match=f=>dirty&&f.start===at&&f.original===wrong&&f.replacement===right;
+    const hit=top.some(match),extra=top.some(f=>!dirty||f.start!==at||f.end!==at+wrong.length);
+    if(dirty){m.positive++;if(edits.some(match))m.any++;if(hit)m.top1++;}else{m.control++;if(edits.length)m.controlWithEdits++;}
+    if(extra)m.extraCases++;
+    if((dirty&&!hit)||extra||r.status!=='complete')failures.push({lang,text,expected:dirty?[wrong,right]:null,top:top.map(f=>[f.original,f.replacement]),status:r.status,diagnostics:r.diagnostics});
+   }
+  }
+  assert.equal(total,1024);
+  mkdirSync('qualification-artifacts',{recursive:true});
+  writeFileSync('qualification-artifacts/quality.json',JSON.stringify({kind:'synthetic-template-spelling-challenge',total,counts,failures},null,2));
+  console.log('PWE_LANGUAGE_QUALIFICATION '+JSON.stringify({total,counts}));
+ }finally{await harper?.dispose();}
+});

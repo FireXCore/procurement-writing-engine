@@ -1,0 +1,5 @@
+# Automated qualification
+
+3,072 new generated protection/core cases (2,048 host literal variants, 1,024 mock-provider adversarial tests). Initial 64-case probe found 24 explicit host-name exposures with attached punctuation. The fix conservatively protects touching non-whitespace tokens, including substrings. 2,048 routing cases passed in isolated JavaScript and the four Node CI matrix checks passed for commit 7bd49f4.
+
+The upstream integration suite now also measures 1,024 synthetic spelling template variants using actual pinned providers. Counts report target recall, top candidate recall, extra edits, controls with edits and incomplete cases; controls are not linguist-certified clean sentences. Quality scores are diagnostic, not release approval. Safety is asserted. The report is written to qualification-artifacts/quality.json in the checkout, summary is printed to CI logs. Run npm ci --ignore-scripts then npm run test:upstream. No claims of independent corpus accuracy or actual iOS certification. No release or production promotion.
