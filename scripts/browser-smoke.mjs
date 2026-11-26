@@ -1,4 +1,4 @@
-import { chromium } from 'playwright-core';
+import { chromium,webkit,firefox } from 'playwright-core';
 import { createServer } from 'node:http';
 import { readFile,stat } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
@@ -8,14 +8,17 @@ import {cases,locked,extendedCases,alpha7Cases} from '../test/acceptance-fixture
 const root=resolve('dist/demo');
 const candidates=[process.env.PWE_CHROME,process.env.CHROME_PATH,process.env.CHROME_BIN,'/usr/bin/google-chrome','/usr/bin/chromium',process.env.ProgramFiles&&`${process.env.ProgramFiles}\\Google\\Chrome\\Application\\chrome.exe`,process.env['ProgramFiles(x86)']&&`${process.env['ProgramFiles(x86)']}\\Microsoft\\Edge\\Application\\msedge.exe`];
 const executablePath=candidates.find(p=>p&&existsSync(p));
-assert.ok(executablePath,'Install Chromium/Chrome or set PWE_CHROME. No browser is downloaded silently.');
+const browserName=process.env.PWE_BROWSER??'chromium';
+const browserType={chromium,webkit,firefox}[browserName];
+assert.ok(browserType,'Unsupported PWE_BROWSER');
+if(browserName==='chromium')assert.ok(executablePath,'Install Chromium/Chrome or set PWE_CHROME. No browser is downloaded silently.');
 const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.wasm':'application/wasm','.svg':'image/svg+xml','.png':'image/png'};
 const server=createServer(async(req,res)=>{try{const url=new URL(req.url,'http://127.0.0.1');const path=resolve(root,'.'+(url.pathname==='/'?'/index.html':decodeURIComponent(url.pathname)));if(!path.startsWith(root+sep)||!(await stat(path)).isFile())throw Error();res.writeHead(200,{'Content-Type':mime[extname(path)]??'application/octet-stream','Cache-Control':'no-store'});res.end(await readFile(path));}catch{res.writeHead(404);res.end();}});
 await new Promise((ok,fail)=>{server.once('error',fail);server.listen(0,'127.0.0.1',ok);});
 let browser;
 try{
   const origin=`http://127.0.0.1:${server.address().port}`;
-  browser=await chromium.launch({executablePath,headless:true,args:process.platform==='linux'&&process.getuid?.()===0?['--no-sandbox']:[]});
+  browser=await browserType.launch({headless:true,...(browserName==='chromium'?{executablePath,args:process.platform==='linux'&&process.getuid?.()===0?['--no-sandbox']:[]}: {})});
   const context=await browser.newContext({serviceWorkers:'block'});
   const external=[];await context.route('**/*',route=>{const url=new URL(route.request().url());if(url.protocol==='data:'||url.protocol==='blob:'||url.origin===origin)return route.continue();external.push(url.origin);return route.abort();});
   const page=await context.newPage();
@@ -267,5 +270,5 @@ try{
   assert.equal(await page.locator('html').getAttribute('data-review'),'idle');
   assert.equal(await page.locator('#findings li').count(),0);
   assert.deepEqual(external,[],'Unexpected external browser traffic');
-  console.log('Real Chromium provider/worker smoke: PASS');
+  console.log('Real browser provider/worker smoke: PASS');
 }finally{await browser?.close();server.closeAllConnections();await new Promise(ok=>server.close(ok));}

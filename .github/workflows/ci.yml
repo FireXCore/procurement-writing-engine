@@ -40,6 +40,12 @@ jobs:
       - run: npm ci --ignore-scripts --no-fund
       - run: npm run typecheck
       - run: npm run test:upstream
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: language-qualification
+          path: qualification-artifacts/quality.json
+          retention-days: 14
       - run: npm run build:demo
       - run: npm run test:browser
       - run: npm audit --audit-level=high
@@ -91,9 +97,30 @@ jobs:
             release-artifacts/procurement-writing-engine-0.1.0-alpha.7.tgz
           retention-days: 14
 
+  browser-compatibility:
+    name: Cross-browser / ${{ matrix.browser }}
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [webkit, firefox]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts --no-fund
+      - run: npx --no-install playwright-core install --with-deps ${{ matrix.browser }}
+      - run: npm run build:demo
+      - run: npm run test:browser
+        env:
+          PWE_BROWSER: ${{ matrix.browser }}
+
   release-alpha:
     name: Publish verified GitHub alpha.7
-    needs: [contract, upstream-and-browser]
+    needs: [contract, upstream-and-browser, browser-compatibility]
     if: github.repository == 'FireXCore/procurement-writing-engine' && github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     timeout-minutes: 10
