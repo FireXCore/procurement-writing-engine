@@ -8,8 +8,9 @@ const split=x=>[...graphemes.segment(x)].map(s=>s.segment);
 const letters=/^[آابتثجحخدذرزژسشصضطظعغفقکگلمنوهیپچئءؤأإ]{3,24}$/u;
 const normalize=x=>x.normalize('NFC').replace(/[يك]/gu,c=>c==='ي'?'ی':'ک');
 const MAX_WORDS=250000, MAX_TOKENS=100, MAX_CANDIDATES=4;
-export function createPersianLexiconProvider({words}={}){
+export function createPersianLexiconProvider({words,isKnownSource=()=>false}={}){
   if(!Array.isArray(words)||!words.length||words.length>MAX_WORDS)throw new TypeError('Invalid Persian lexicon');
+  if(typeof isKnownSource!=='function')throw new TypeError('Invalid source evidence');
   const dictionary=new Set();
   for(const w of words){
     if(typeof w!=='string'||!w.isWellFormed()||!letters.test(normalize(w)))throw new TypeError('Invalid Persian lexeme');
@@ -42,7 +43,8 @@ export function createPersianLexiconProvider({words}={}){
       if(signal?.aborted)throw new Error('Cancelled');
       if(++count>MAX_TOKENS)throw new RangeError('Lexicon token budget');
       const original=m[0],source=normalize(original),start=m.index,end=start+original.length;
-      if(!letters.test(source)||dictionary.has(source)||!validRange(text,start,end,b))continue;
+      // Short unknown forms are ambiguous (e.g. فنی). Abstain rather than guessing.
+      if(!letters.test(source)||source.length<=3||dictionary.has(source)||isKnownSource(source)===true||!validRange(text,start,end,b))continue;
       for(const replacement of candidates(source)){
         if(!validReplacement(original,replacement,'fa'))continue;
         if(out.length>=LIMITS.providerFindings)throw new RangeError('Lexicon finding budget');

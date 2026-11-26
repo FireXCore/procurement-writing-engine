@@ -85,6 +85,24 @@ try{
   assert.equal(await page.locator('html').getAttribute('data-review'),'complete');
   assert.ok((await page.locator('#findings .finding-pair').allTextContents()).includes('مشخسات → مشخصات'));
   assert.match(await page.locator('#details').innerText(),/Lilak root dictionary enabled/);
+  // User screenshot regression: correct short word must not become فین.
+  await page.locator('#prose').fill('لطفا مشخسات فنی و قیمت تجیهزات را مجددا ارسال کنید.');
+  await page.locator('#run').click();
+  await page.waitForFunction(()=>['complete','error'].includes(document.documentElement.dataset.review),{},{timeout:90000});
+  assert.equal(await page.locator('html').getAttribute('data-review'),'complete');
+  const screenshotPairs=await page.locator('#findings .finding-pair').allTextContents();
+  for(const p of ['لطفا → لطفاً','مشخسات → مشخصات','تجیهزات → تجهیزات','مجددا → مجدداً'])assert.ok(screenshotPairs.includes(p),JSON.stringify(screenshotPairs));
+  assert.ok(screenshotPairs.every(p=>!p.startsWith('فنی → ')),JSON.stringify(screenshotPairs));
+  await page.setViewportSize({width:390,height:844});
+  assert.equal(await page.locator('#findings').evaluate(e=>getComputedStyle(e).listStyleType),'none');
+  assert.ok(await page.locator('#findings .finding-pair').evaluateAll(es=>es.every(e=>e.scrollWidth<=e.clientWidth+1)));
+  await page.setViewportSize({width:1280,height:720});
+  await page.locator('#prose').fill('احتراما به استحضار می رساند، لطفا پیش فاکتور را در اسرع وقت ارسال فرمایید.');
+  await page.locator('#run').click();
+  await page.waitForFunction(()=>['complete','error'].includes(document.documentElement.dataset.review),{},{timeout:90000});
+  const formalPairs=await page.locator('#findings .finding-pair').allTextContents();
+  for(const p of ['احتراما → احتراماً','می رساند، → می‌رساند،','لطفا → لطفاً','پیش فاکتور → پیش‌فاکتور'])assert.ok(formalPairs.includes(p),JSON.stringify(formalPairs));
+
   assert.deepEqual(external,[]);
   await page.locator('#lexicon-local').uncheck();
   await page.locator('#lexicon-options summary').click();

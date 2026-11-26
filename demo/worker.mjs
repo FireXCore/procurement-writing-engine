@@ -1,4 +1,5 @@
 import { createEngine, createHarper, createVirastar, createTextlint, procurementPolicyRules, createPersianLexiconProvider } from '../src/index.mjs';
+import {createSourceAbstainer} from './dictionary-roots.mjs';
 self.onmessage=async({data})=>{
   let harper;
   try{
@@ -10,7 +11,7 @@ self.onmessage=async({data})=>{
     }
     if(languages.has('fa')){
       providers.push(await createVirastar());
-      if(data.lexicon===true){const {default:words}=await import('virtual:pwe-persian-roots');providers.push(createPersianLexiconProvider({words}));}
+      if(data.lexicon===true){const {default:evidence}=await import('virtual:pwe-persian-roots');providers.push(createPersianLexiconProvider({words:evidence.words,isKnownSource:createSourceAbstainer(evidence)}));}
     }
     const report=await createEngine(providers).analyze(data.document);
     self.postMessage({ok:true,report});

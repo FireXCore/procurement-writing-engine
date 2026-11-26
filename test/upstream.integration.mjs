@@ -117,17 +117,19 @@ test('real Textlint mass-noun agreement and negative controls',async()=>{
 
 test('real pinned Lilak dictionary root provider integration',async()=>{
  const {default:dictionary}=await import('dictionary-fa');
- const {parseDictionaryRoots}=await import('../demo/dictionary-roots.mjs');
+ const {parseDictionaryEvidence,createSourceAbstainer}=await import('../demo/dictionary-roots.mjs');
  const {createPersianLexiconProvider}=await import('../src/index.mjs');
- const words=parseDictionaryRoots(dictionary.dic.toString('utf8'));
+ const evidence=parseDictionaryEvidence(dictionary.dic.toString('utf8'),dictionary.aff.toString('utf8'));
+ const words=evidence.words;
  assert.ok(words.length>=1000);
  assert.ok(words.includes('مشخصات'));
- const provider=createPersianLexiconProvider({words});
+ const provider=createPersianLexiconProvider({words,isKnownSource:createSourceAbstainer(evidence)});
  const text='مشخسات';
  const result=await createEngine([provider]).analyze({text,snapshotId:'lilak-real',regions:[{start:0,end:text.length,kind:'prose',language:'fa'}]});
  assert.equal(result.status,'complete');
  assert.ok(result.findings.some(f=>f.original===text&&f.replacement==='مشخصات'));
  assert.equal(result.apply,false);
+ assert.deepEqual(provider.check('فنی','fa'),[]);
  const clean=provider.check('مشخصات','fa');
  assert.deepEqual(clean,[]);
  console.log('Lilak pinned simple roots:',words.length);

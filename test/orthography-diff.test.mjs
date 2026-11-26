@@ -30,3 +30,9 @@ test('bounded input and number of edits; no unbounded matrix or output',()=>{
  assert.throws(()=>orthographyEdits('ک'.repeat(2001),'ک'));
  assert.throws(()=>orthographyEdits('ك '.repeat(101),'ک '.repeat(101)));
 });
+
+test('adjacent joining and tanwin patches are independent with exact reconstruction',()=>{
+ const a='احتراما به استحضار می رساند، لطفا پیش فاکتور را در اسرع وقت ارسال فرمایید.';
+ const b='احتراماً به استحضار می‌رساند، لطفاً پیش‌فاکتور را در اسرع وقت ارسال فرمایید.';
+ assert.deepEqual(verify(a,b).map(e=>[e.original,e.replacement]),[['احتراما','احتراماً'],['می رساند،','می‌رساند،'],['لطفا','لطفاً'],['پیش فاکتور','پیش‌فاکتور']]);
+});
