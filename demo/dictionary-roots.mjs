@@ -68,3 +68,36 @@ export function createSourceAbstainer(evidence){
     return false;
   };
 }
+
+// Keep the browser artifact as two flat strings, rather than thousands of
+// nested arrays and per-word Sets. Exact binary search, no hash collisions.
+export function packDictionaryEvidence(evidence){
+  const rows=evidence.surfaces.map(([w,f])=>w+'\t'+f.join('')).sort((a,b)=>a<b?-1:a>b?1:0);
+  return {version:1,words:evidence.words.join('\n'),surfaces:rows.join('\n'),suffixes:evidence.suffixes};
+}
+export function unpackDictionaryEvidence(packed){
+  if(!packed||packed.version!==1||typeof packed.words!=='string'||typeof packed.surfaces!=='string'||packed.words.length>8000000||packed.surfaces.length>16000000||!Array.isArray(packed.suffixes)||packed.suffixes.length>128)throw new TypeError('Invalid packed dictionary');
+  const words=packed.words.split('\n'),rows=packed.surfaces.split('\n');
+  if(!words.length||words.length>250000||rows.length>250000)throw new RangeError('Packed dictionary size');
+  const suffixes=packed.suffixes;
+  function lookup(word){
+    let lo=0,hi=rows.length-1;
+    while(lo<=hi){
+      const mid=(lo+hi)>>>1,row=rows[mid],tab=row.indexOf('\t'),key=row.slice(0,tab);
+      if(key===word)return row.slice(tab+1);
+      if(key<word)lo=mid+1;else hi=mid-1;
+    }
+    return undefined;
+  }
+  return {words,isKnownSource(word){
+    if(lookup(word)!==undefined)return true;
+    for(const [suffix,flags] of suffixes){
+      if(word.length<=suffix.length||!word.endsWith(suffix))continue;
+      const stem=lookup(word.slice(0,-suffix.length));
+      if(stem!==undefined){
+        for(let i=0;i<stem.length;i+=2)if(flags.includes(stem.slice(i,i+2)))return true;
+      }
+    }
+    return false;
+  }};
+}

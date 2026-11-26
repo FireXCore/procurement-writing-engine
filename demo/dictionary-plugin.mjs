@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname,join } from 'node:path';
-import { parseDictionaryEvidence } from './dictionary-roots.mjs';
+import { parseDictionaryEvidence,packDictionaryEvidence } from './dictionary-roots.mjs';
 const require=createRequire(import.meta.url);
 const id='virtual:pwe-persian-roots',resolved='\0'+id;
 export function dictionaryPlugin(){
@@ -10,6 +10,6 @@ export function dictionaryPlugin(){
     const dir=dirname(require.resolve('dictionary-fa'));
     const roots=parseDictionaryEvidence(readFileSync(join(dir,'index.dic'),'utf8'),readFileSync(join(dir,'index.aff'),'utf8'));
     if(roots.words.length<1000)throw new Error('Unexpectedly small Persian dictionary');
-    return 'export default '+JSON.stringify(roots)+';';
+    return 'export default '+JSON.stringify(packDictionaryEvidence(roots))+';';
   }};
 }

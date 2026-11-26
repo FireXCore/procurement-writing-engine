@@ -106,6 +106,31 @@ try{
   assert.deepEqual(external,[]);
   await page.locator('#lexicon-local').uncheck();
   await page.locator('#lexicon-options summary').click();
+  // Simulate optional dictionary worker failure on first attempt. The base
+  // engine must retry without it, preserve input, and label coverage partial.
+  await page.evaluate(()=>{
+    const NativeWorker=window.Worker;
+    window.Worker=class extends NativeWorker{
+      postMessage(data,...rest){
+        if(data?.lexicon===true){
+          queueMicrotask(()=>this.dispatchEvent(new ErrorEvent('error')));
+          return;
+        }
+        super.postMessage(data,...rest);
+      }
+    };
+  });
+  await page.locator('#lexicon-options summary').click();
+  await page.locator('#lexicon-local').check();
+  await page.locator('#prose').fill('لطفا مجددا ارسال کنید.');
+  await page.locator('#run').click();
+  await page.waitForFunction(()=>['complete','error'].includes(document.documentElement.dataset.review),{},{timeout:90000});
+  assert.equal(await page.locator('html').getAttribute('data-review'),'complete');
+  assert.equal(await page.locator('html').getAttribute('data-analysis-status'),'partial');
+  assert.match(await page.locator('#details').innerText(),/Persian dictionary unavailable.*Base review only/);
+  assert.ok((await page.locator('#findings .finding-pair').allTextContents()).includes('لطفا → لطفاً'));
+  assert.equal(await page.locator('#prose').inputValue(),'لطفا مجددا ارسال کنید.');
+  await page.reload();
   // Persistence requires explicit opt-in and a genuine vote.
   await page.locator('#learning-options summary').click();
   await page.locator('#learn-local').check();

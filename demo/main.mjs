@@ -39,7 +39,7 @@ function syncRoutingMode(){literals.disabled=!v2.checked;mode.textContent=v2.che
 v2.checked=true;syncRoutingMode();
 v2.onchange=()=>{syncRoutingMode();reset();};literals.oninput=()=>reset();
 function finish(result,plan){
-  const state=(plan.skipped||plan.suspectedRanges)&&result.status==='complete'?'partial':result.status;
+  const state=(plan.skipped||plan.suspectedRanges||plan.dictionaryError)&&result.status==='complete'?'partial':result.status;
   const session=learn.checked&&['complete','partial'].includes(result.status)?adaptive.prepare(plan.document,result):null;
   const groups=new Map();
   for(const f of result.findings){
@@ -93,7 +93,7 @@ function finish(result,plan){
   status.textContent=!plan.languages.length?'No eligible prose reviewed — not a clean result.':state+': '+shown.length+' review issue(s); '+result.findings.length+' candidate(s).';
   const languages=plan.languages.map(x=>x==='fa'?'Persian':'English').join(', ')||'None';
   const reasons=[...new Set(result.diagnostics.map(x=>(labels[x.code]||'Reduced review coverage')+(x.provider?' ('+x.provider+')':'')))];
-  details.textContent='Detected language: '+languages+'. '+(plan.experimental?'Experimental V2: explicit names and conservative token quarantine; unclassified tokens skipped: '+plan.skipped+'. Suspected name ranges quarantined: '+(plan.suspectedRanges??0)+'.':'Protected inline ranges: '+plan.inlineProtected+'. Inferred identifier ranges: '+plan.inferredProtected+'. Unclassified regions skipped: '+plan.skipped+'.')+(Number.isSafeInteger(plan.reviewedUnits)?' Prose routed for review: '+plan.reviewedUnits+'/'+plan.totalUnits+' non-whitespace UTF-16 units (includes protected data in denominator).':'')+(plan.coverage?' Recognized patterns / supplied names: '+plan.coverage.recognized+'; suspected name units: '+plan.coverage.suspected+'; other unreviewed units (including separators): '+plan.coverage.unreviewed+'.':'')+(lexicon.checked&&plan.languages.includes('fa')?' Optional Lilak root dictionary enabled; short unknown words and recognized suffix forms are skipped. Other inflections and names may still produce false positives.':'')+(reasons.length?' '+reasons.join('; ')+'.':'')+(!plan.languages.length?' No eligible prose was reviewed.':'');
+  details.textContent='Detected language: '+languages+'. '+(plan.experimental?'Experimental V2: explicit names and conservative token quarantine; unclassified tokens skipped: '+plan.skipped+'. Suspected name ranges quarantined: '+(plan.suspectedRanges??0)+'.':'Protected inline ranges: '+plan.inlineProtected+'. Inferred identifier ranges: '+plan.inferredProtected+'. Unclassified regions skipped: '+plan.skipped+'.')+(Number.isSafeInteger(plan.reviewedUnits)?' Prose routed for review: '+plan.reviewedUnits+'/'+plan.totalUnits+' non-whitespace UTF-16 units (includes protected data in denominator).':'')+(plan.coverage?' Recognized patterns / supplied names: '+plan.coverage.recognized+'; suspected name units: '+plan.coverage.suspected+'; other unreviewed units (including separators): '+plan.coverage.unreviewed+'.':'')+(plan.dictionaryUsed?' Optional Lilak root dictionary enabled; short unknown words and recognized suffix forms are skipped. Other inflections and names may still produce false positives.':'')+(plan.dictionaryError?' Persian dictionary unavailable ('+plan.dictionaryError+'). Base review only; vocabulary coverage incomplete.':'')+(reasons.length?' '+reasons.join('; ')+'.':'')+(!plan.languages.length?' No eligible prose was reviewed.':'');
   document.documentElement.dataset.analysisStatus=state;
   document.documentElement.dataset.review='complete';
 }
@@ -108,18 +108,50 @@ run.onclick=()=>{
       plan={...buildResearchSnapshot(input,protectedText,'demo:'+token,{hostLiterals}),experimental:true,totalUnits:input.replace(/\s/gu,'').length};
     }else plan=buildDemoSnapshot(input,protectedText,'demo:'+token);
   }catch{reset('Invalid input or region map.');document.documentElement.dataset.review='error';return;}
-  if(!plan.languages.length){finish({status:'complete',findings:[],diagnostics:[]},plan);return;}
+  if(!plan.languages.length){finish({snapshotId:plan.document.snapshotId,apply:false,status:'complete',findings:[],diagnostics:[]},plan);return;}
   run.disabled=true;cancel.disabled=false;
-  function fail(){if(token===revision){reset('Local provider unavailable or timed out.');document.documentElement.dataset.review='error';}}
-  try{
-    worker=new Worker(new URL('./worker.mjs',import.meta.url),{type:'module'});
-    worker.onmessage=({data})=>{
-      if(token!==revision||input!==prose.value)return;
-      if(!data.ok||data.report.snapshotId!==plan.document.snapshotId||data.report.apply!==false){fail();return;}
-      worker?.terminate();worker=null;clearTimeout(timer);run.disabled=false;cancel.disabled=true;
-      try{finish(data.report,plan);}catch{fail();}
-    };
-    worker.onerror=fail;worker.onmessageerror=fail;timer=setTimeout(fail,60000);
-    worker.postMessage({document:plan.document,lexicon:lexicon.checked});
-  }catch{fail();}
+  const wantsDictionary=lexicon.checked&&plan.languages.includes('fa');
+  const stages={'setup':'Starting local worker','english-setup':'Preparing English providers','persian-setup':'Preparing Persian provider','dictionary-load':'Loading Persian dictionary','dictionary-init':'Indexing Persian dictionary','review':'Reviewing text'};
+  let attempt=0;
+  function launch(useDictionary,fallbackReason){
+    const id=++attempt;
+    let stage='setup';
+    const current=()=>token===revision&&id===attempt&&input===prose.value;
+    function fail(reason){
+      if(!current())return;
+      worker?.terminate();worker=null;clearTimeout(timer);
+      if(useDictionary){
+        status.textContent='Persian dictionary unavailable ('+reason+'). Retrying base review…';
+        launch(false,reason);return;
+      }
+      reset('Local provider unavailable ('+reason+').');
+      document.documentElement.dataset.review='error';
+    }
+    function arm(){
+      clearTimeout(timer);
+      timer=setTimeout(()=>fail(stage+'-timeout'),stage==='dictionary-load'||stage==='dictionary-init'?90000:60000);
+    }
+    try{
+      worker=new Worker(new URL('./worker.mjs',import.meta.url),{type:'module'});
+      worker.onmessage=({data})=>{
+        if(!current())return;
+        if(data?.type==='progress'&&Object.hasOwn(stages,data.stage)){
+          stage=data.stage;status.textContent=stages[stage]+'…'+(fallbackReason?' (base review only)':'');arm();return;
+        }
+        if(data?.type!=='result'||!data.ok||data.report?.snapshotId!==plan.document.snapshotId||data.report?.apply!==false){
+          fail('provider-'+stage);return;
+        }
+        worker?.terminate();worker=null;clearTimeout(timer);run.disabled=false;cancel.disabled=true;
+        plan.dictionaryUsed=data.dictionaryUsed===true;
+        plan.dictionaryError=fallbackReason||(data.dictionaryError?'dictionary-load-or-init':null);
+        if(useDictionary&&!plan.dictionaryUsed&&!plan.dictionaryError)plan.dictionaryError='missing-dictionary-result';
+        try{finish(data.report,plan);}catch{reset('Review result could not be displayed.');document.documentElement.dataset.review='error';}
+      };
+      worker.onerror=()=>fail(stage+'-worker-error');
+      worker.onmessageerror=()=>fail(stage+'-message-error');
+      arm();
+      worker.postMessage({document:plan.document,lexicon:useDictionary});
+    }catch{fail(stage+'-worker-start');}
+  }
+  launch(wantsDictionary,null);
 };
