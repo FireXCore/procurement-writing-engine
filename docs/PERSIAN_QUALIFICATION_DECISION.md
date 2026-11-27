@@ -10,7 +10,7 @@ Original human and OCR inputs are pinned by exact byte count and SHA-256 from th
 
 The parser measures only distinct, normalized simple Persian single-token pairs (1–24 letters); reports unchanged, normalization-equivalent, boundary/ZWNJ, unsupported and duplicate exclusions. Short words are retained so abstention is visible. Human and OCR sets are reported separately. No test targets enter candidate generation, frequency data, or overrides. Existing public dictionary overlap is unknown.
 
-Compare actual PWE Lilak lexical provider vs nspell 2.1.5 on the identical dictionary-fa 2.0.0 asset. nspell is research-only, with exact direct and transitive versions in isolated manifest; generated lock archived for audit; not yet a reproducible release lock. Both comparators return at most four eligible candidates. Measure top1, top4, abstention, paired gold control edits, paired success, partial cases, setup and paired-call latency. Gold controls are not independently certified in all contexts. These are word-level comparison metrics, not general linguistic accuracy. A passing job is execution success, not quality approval.
+Compare actual PWE Lilak lexical provider vs nspell 2.1.5 on the identical dictionary-fa 2.0.0 asset. nspell is research-only, with exact direct and transitive versions in isolated manifest; exact integrity lock recovered from initial CI artifact and committed; isolated npm ci. Both comparators return at most four eligible candidates. Measure top1, top4, abstention, paired gold control edits, paired success, partial cases, setup and paired-call latency. Gold controls are not independently certified in all contexts. These are word-level comparison metrics, not general linguistic accuracy. A passing job is execution success, not quality approval.
 
 ## Stage 2: evidence and alternatives
 
@@ -19,3 +19,5 @@ Verify ManaTTS text-only source provenance and rights; freeze revision and disjo
 ## Release decision
 
 No Alpha 8 publication or production deployment for this change. Next gate: obtain real report; investigate missed and false suggestions; assess browser memory and latency before choosing any new dependency. Existing thresholds remain mandatory. No invented progress percentage.
+
+Initial CI passed dependency installation, audit, download and SHA verification but failed strict TSV schema/count parsing. Support CSV quoting, blank records and CR line endings; retain locked row counts and log only structural diagnostics. No quality result yet.

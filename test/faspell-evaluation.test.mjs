@@ -15,3 +15,9 @@ test('FAspell metrics distinguish recall, abstention, control edits and incomple
  const r=summarizeCases(rows,w=>({candidates:w==='الف'?['کتاب']:w==='ببب'?['مداد','قلم']:w==='قلم'?['قدم']:[],partial:w==='ججج'}));
  assert.equal(r.pairs,3);assert.equal(r.top1,1);assert.equal(r.top4,2);assert.equal(r.abstained,1);assert.equal(r.correctWithSuggestion,1);assert.equal(r.pairedSuccess,1);assert.equal(r.partial,1);
 });
+
+test('FAspell accepts CSV quoting, blank records, and legacy CR line endings',()=>{
+ const r=parseFaSpell('\uFEFF"#misspelt"\t"corrected"\t"error-category"\r\n\n"مشخسات"\t"مشخصات"\t"test\t""quoted"""\r\r"تجیهزات"\t"تجهیزات"\t2\r',2);
+ assert.equal(r.counts.rows,2);assert.equal(r.counts.eligible,2);
+ assert.throws(()=>parseFaSpell('#misspelt\tcorrected\n"مشخسات\tمشخصات\n',1));
+});

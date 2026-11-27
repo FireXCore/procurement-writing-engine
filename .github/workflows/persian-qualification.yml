@@ -24,7 +24,7 @@ jobs:
       - run: npm ci --ignore-scripts --no-fund
       - name: Install isolated comparison dependencies
         run: |
-          npm install --prefix lab/faspell --ignore-scripts --no-fund --no-audit
+          npm ci --prefix lab/faspell --ignore-scripts --no-fund --no-audit
           npm audit --prefix lab/faspell --audit-level=high
       - name: Fetch only locked evaluation inputs
         shell: bash
