@@ -1,4 +1,5 @@
 import {LIMITS,eligible,validReplacement,boundaries,validRange} from '../regions.mjs';
+import {buildPersianRanking} from './persian-context-ranking.mjs';
 
 // Host-owned dictionary: no third-party data is bundled. Exact membership,
 // one grapheme insertion/deletion/substitution/transposition. No text upload.
@@ -17,7 +18,7 @@ function keyboardNeighbor(a,b){
   return !!p&&!!q&&a!==b&&Math.abs(p[1]-q[1])<=1&&Math.abs(p[0]-q[0])<=1.25;
 }
 const MAX_WORDS=250000, MAX_TOKENS=100, MAX_CANDIDATES=4;
-export function createPersianLexiconProvider({words,isKnownSource=()=>false,preferredSpellings=[],preferredWords=[]}={}){
+export function createPersianLexiconProvider({words,isKnownSource=()=>false,preferredSpellings=[],preferredWords=[],rankingCorpus=[],wordFrequencies=[]}={}){
   if(!Array.isArray(words)||!words.length||words.length>MAX_WORDS)throw new TypeError('Invalid Persian lexicon');
   if(typeof isKnownSource!=='function')throw new TypeError('Invalid source evidence');
   const dictionary=new Set();
@@ -46,6 +47,7 @@ export function createPersianLexiconProvider({words,isKnownSource=()=>false,pref
   // override exact source evidence or make an unknown target valid.
   if(!Array.isArray(preferredWords)||preferredWords.length>512||preferredWords.some(w=>typeof w!=='string'||!w.isWellFormed()||!letters.test(w)))throw new TypeError('Invalid preferred words');
   const domain=new Set(preferredWords.map(normalize).filter(w=>dictionary.has(w)));
+  const ranking=buildPersianRanking({corpus:rankingCorpus,frequencies:wordFrequencies,hasWord:w=>dictionary.has(w)});
   const cache=new Map();
   function candidates(source){
     if(cache.has(source))return cache.get(source);
@@ -71,9 +73,17 @@ export function createPersianLexiconProvider({words,isKnownSource=()=>false,pref
       for(let i=1;i<a.length;i++)if(a[i]===a[i-1]&&(i<2||a[i]!==a[i-2]))repeats.push(i);
       for(let i=0;i<repeats.length;i++)for(let j=i+1;j<repeats.length;j++)add(a.filter((_,k)=>k!==repeats[i]&&k!==repeats[j]),1);
     }
-    const rank=([word,weight])=>weight+(domain.has(word)?5:0);
-    const result=[...found].sort((a,b)=>rank(b)-rank(a)||(a[0]<b[0]?-1:a[0]>b[0]?1:0)).slice(0,MAX_CANDIDATES).map(x=>x[0]);
-    if(cache.size>=512)cache.delete(cache.keys().next().value);cache.set(source,result);return result;
+    // Cache only context-independent candidates, never the selected ordering.
+    const result=[...found];
+    if(result.length<=64){if(cache.size>=512)cache.delete(cache.keys().next().value);cache.set(source,result);}
+    return result;
+  }
+  function ranked(source,text,start,end){
+    const [left,right]=ranking.neighbors(text,start,end);
+    const rank=([word,weight])=>weight+(domain.has(word)?5:0)+ranking.score(word,left,right);
+    return candidates(source).map(entry=>({entry,score:rank(entry)}))
+      .sort((a,b)=>b.score-a.score||(a.entry[0]<b.entry[0]?-1:a.entry[0]>b.entry[0]?1:0))
+      .slice(0,MAX_CANDIDATES).map(x=>x.entry[0]);
   }
   return Object.freeze({id:'fa-lexicon',languages:Object.freeze(['fa']),check(text,language,signal){
     if(language!=='fa'||typeof text!=='string'||text.length>LIMITS.region||!text.isWellFormed()||!eligible(text,'fa'))throw new TypeError('Invalid lexicon input');
@@ -87,7 +97,7 @@ export function createPersianLexiconProvider({words,isKnownSource=()=>false,pref
       const original=m[0],source=normalize(original),start=m.index,end=start+original.length;
       // Short unknown forms are ambiguous (e.g. فنی). Abstain rather than guessing.
       if(!letters.test(source)||source.length<=3||dictionary.has(source)||isKnownSource(source)===true||!validRange(text,start,end,b))continue;
-      for(const replacement of candidates(source)){
+      for(const replacement of ranked(source,text,start,end)){
         if(!validReplacement(original,replacement,'fa'))continue;
         if(out.length>=LIMITS.providerFindings)throw new RangeError('Lexicon finding budget');
         out.push({start,end,original,replacement,category:'spelling',rule:'fa-lexicon-one-edit',message:'Review this dictionary-based spelling candidate; verify technical names and meaning.'});

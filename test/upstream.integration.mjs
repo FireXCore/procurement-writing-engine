@@ -151,8 +151,8 @@ test('1024 synthetic bilingual spelling challenges with real pinned providers', 
  try{
   harper=await createHarper({binary:binaryInlined,worker:false});
   const evidence=unpackDictionaryEvidence(packDictionaryEvidence(parseDictionaryEvidence(dictionary.dic.toString('utf8'),dictionary.aff.toString('utf8'))));
-  const {formalSpellings,procurementWords}=await import('../demo/persian-formal-spellings.mjs');
-  const lexicon=createPersianLexiconProvider({...evidence,preferredSpellings:formalSpellings,preferredWords:procurementWords});
+  const {formalSpellings,procurementWords,procurementCorpus}=await import('../src/persian-procurement-profile.mjs');
+  const lexicon=createPersianLexiconProvider({...evidence,preferredSpellings:formalSpellings,preferredWords:procurementWords,rankingCorpus:procurementCorpus});
   const e=createEngine([harper.provider,await createTextlint(procurementPolicyRules),await createVirastar(),lexicon]);
   let total=0;
   for(const [lang,pairs,frames] of [['en',en,enFrames],['fa',fa,faFrames]]){
@@ -203,7 +203,7 @@ test('1024 synthetic bilingual spelling challenges with real pinned providers', 
   assert.equal(counts.en.top1,256);assert.ok(counts.fa.top1>=224);
   for(const m of Object.values(counts)){assert.equal(m.controlWithEdits,0);assert.equal(m.extraCases,0);assert.equal(m.partial,0);}
   assert.equal(ambiguity.abstained,32);assert.equal(variants.accepted,16);
-  assert.ok(novel.top1>=72);assert.ok(novel.any>=96);
+  assert.ok(novel.top1>=104);assert.ok(novel.any>=104);
   assert.equal(novel.controlsWithEdits,0);assert.equal(novel.unrelated,0);assert.equal(novel.partial,0);
  }finally{await harper?.dispose();}
 });
@@ -249,8 +249,8 @@ test('external NeveshtYar published challenge subset (diagnostic, no training)',
   console.log('PWE_EXTERNAL_QUALIFICATION '+JSON.stringify({total:rows.length,counts}));
   // Retain the observed external development-set baseline. No changes to
   // the expected targets, including ambiguous or rare words.
-  assert.ok(counts['fa:fixed'].top1+counts['fa:reported-hard'].top1>=5,'External Persian top-1 regression');
-  assert.ok(counts['fa:fixed'].any+counts['fa:reported-hard'].any>=17,'External Persian candidate recall regression');
+  assert.ok(counts['fa:fixed'].top1+counts['fa:reported-hard'].top1>=6,'External Persian top-1 regression');
+  assert.ok(counts['fa:fixed'].any+counts['fa:reported-hard'].any>=19,'External Persian candidate recall regression');
   assert.ok(counts['en:fixed'].top1+counts['en:reported-hard'].top1>=4,'External English top-1 regression');
   assert.ok(counts['en:fixed'].any+counts['en:reported-hard'].any>=10,'External English candidate recall regression');
  }finally{await p.dispose();}
@@ -264,4 +264,18 @@ test('real Textlint factual embedded agreement remains distinct from subjunctive
  for(const s of ['We require that the supplier have confirmed the quotation.','We recommend that each of the suppliers have submitted a certificate.','Suppose that the equipment were available.','We require that the goods be available.']){
    const result=await e.analyze(snap(s,'en'));assert.deepEqual(result.findings,[],s);
  }
+});
+
+test('real Lilak context ranking remains local and independent of repeated source tokens',async()=>{
+ const {default:dictionary}=await import('dictionary-fa');
+ const {prepareLilakDictionary,createLilakProvider}=await import('../src/index.mjs');
+ const packed=prepareLilakDictionary(dictionary.dic.toString('utf8'),dictionary.aff.toString('utf8'));
+ const p=createLilakProvider(packed,{rankingCorpus:['بازدید دانشگاه','رئیس دانشکده']});
+ for(const [s,target] of [['بازدید دانشکاه','دانشگاه'],['رئیس دانشکاه','دانشکده']]){
+   const r=p.check(s,'fa').filter(f=>f.original==='دانشکاه');
+   assert.equal(r[0]?.replacement,target,s);
+   assert.ok(r.every(f=>s.slice(f.start,f.end)===f.original));
+ }
+ const a=p.check('دانشکاه','fa');
+ p.check('بازدید دانشکاه','fa');assert.deepEqual(p.check('دانشکاه','fa'),a);
 });

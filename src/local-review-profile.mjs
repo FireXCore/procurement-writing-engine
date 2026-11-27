@@ -4,7 +4,7 @@ import {createVirastar} from './adapters/virastar.mjs';
 import {createTextlint} from './adapters/textlint.mjs';
 import {createPersianLexiconProvider} from './adapters/persian-lexicon.mjs';
 import {parseDictionaryEvidence,packDictionaryEvidence,unpackDictionaryEvidence} from './lilak-dictionary.mjs';
-import {formalSpellings,procurementWords} from './persian-procurement-profile.mjs';
+import {formalSpellings,procurementWords,procurementCorpus} from './persian-procurement-profile.mjs';
 import {procurementPolicyRules} from './policy.mjs';
 
 // Build-time / host-owned assets only. No network or implicit dictionary download.
@@ -12,17 +12,18 @@ export function prepareLilakDictionary(dic,aff){
   const packed=packDictionaryEvidence(parseDictionaryEvidence(dic,aff));
   return Object.freeze({...packed,suffixes:Object.freeze(packed.suffixes.map(([s,f])=>Object.freeze([s,Object.freeze([...f])])))});
 }
-export function createLilakProvider(packed,{preferredSpellings=formalSpellings,preferredWords=procurementWords}={}){
-  return createPersianLexiconProvider({...unpackDictionaryEvidence(packed),preferredSpellings,preferredWords});
+export function createLilakProvider(packed,{preferredSpellings=formalSpellings,preferredWords=procurementWords,rankingCorpus=procurementCorpus,wordFrequencies=[]}={}){
+  return createPersianLexiconProvider({...unpackDictionaryEvidence(packed),preferredSpellings,preferredWords,rankingCorpus,wordFrequencies});
 }
 
 // Explicit production-host composition of the same lightweight providers
 // used in qualification. Failure is visible, not a silently reduced profile.
-export async function createLocalReviewProfile({languages=['en','fa'],harperBinary,harperWorker=false,persianDictionary,policies=true}={}){
+export async function createLocalReviewProfile({languages=['en','fa'],harperBinary,harperWorker=false,persianDictionary,persianRanking,policies=true}={}){
   if(!Array.isArray(languages)||!languages.length||languages.length>2||new Set(languages).size!==languages.length||languages.some(l=>!['en','fa'].includes(l))||typeof harperWorker!=='boolean'||typeof policies!=='boolean')throw new TypeError('Invalid local profile');
   const enabled=[...languages];
   if(enabled.includes('en')&&!harperBinary)throw new TypeError('Explicit local Harper binary required');
   if(!enabled.includes('fa')&&persianDictionary!==undefined)throw new TypeError('Persian dictionary requires Persian language');
+  if(persianRanking!==undefined&&(!persianDictionary||!persianRanking||typeof persianRanking!=='object'||Array.isArray(persianRanking)||Object.keys(persianRanking).some(k=>!['rankingCorpus','wordFrequencies'].includes(k))))throw new TypeError('Invalid Persian ranking profile');
   const providers=[];let harper;
   try{
     if(enabled.includes('en')){
@@ -31,7 +32,7 @@ export async function createLocalReviewProfile({languages=['en','fa'],harperBina
     }
     if(enabled.includes('fa')){
       providers.push(await createVirastar());
-      if(persianDictionary!==undefined)providers.push(createLilakProvider(persianDictionary));
+      if(persianDictionary!==undefined)providers.push(createLilakProvider(persianDictionary,persianRanking));
     }
     const engine=createEngine(providers);
     let closed=false,active=null,closing=null;

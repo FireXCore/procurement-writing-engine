@@ -164,3 +164,5 @@ try {
 ```
 
 For Persian only, pass `languages: ['fa']`; no Harper binary is needed. The optional dictionary supports a conservative subset of Lilak long-flag morphology, not full Hunspell. Hosts can prepare packed assets at build time. The SDK does not distribute dictionary bytes. This is prerelease source, not a publication receipt.
+
+Optional Persian ranking: `createLocalReviewProfile({harperBinary, persianDictionary, persianRanking:{rankingCorpus,wordFrequencies}})` accepts host-reviewed Persian strings and `[word,count]` tuples. The default profile includes small curated procurement collocations; no public frequency corpus is distributed. Context and counts can only reorder eligible dictionary candidates, and never train on reviewed user documents. Do not pass unreviewed customer text as a ranking corpus.

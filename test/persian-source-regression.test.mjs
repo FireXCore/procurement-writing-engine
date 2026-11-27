@@ -43,3 +43,36 @@ test('keyboard proximity and omitted repeated letters rank existing candidates, 
  assert.deepEqual(z.check('کلاه','fa'),[]);
  assert.ok(z.check('کلاهک','fa').every(f=>['کلاه','کلام','کلاغ'].includes(f.replacement)));
 });
+
+test('context ranking changes ordering per occurrence without leaking across punctuation or cache',()=>{
+ const words=['دانشگاه','دانشکده','بازدید','رئیس','کتابخانه'];
+ const p=createPersianLexiconProvider({words,rankingCorpus:['بازدید دانشگاه','رئیس دانشکده']});
+ const top=s=>p.check(s,'fa').filter(f=>f.original==='دانشکاه')[0]?.replacement;
+ const neutral=top('دانشکاه');
+ for(let i=0;i<50;i++){
+  assert.equal(top('بازدید دانشکاه'),'دانشگاه');
+  assert.equal(top('رئیس دانشکاه'),'دانشکده');
+  assert.equal(top('بازدید. دانشکاه'),neutral);
+  assert.equal(top('رئیس\nدانشکاه'),neutral);
+  assert.equal(top('دانشکاه'),neutral);
+ }
+ assert.deepEqual(p.check('بازدید دانشگاه','fa'),[]);
+ assert.deepEqual(p.check('رئیس دانشکده','fa'),[]);
+ const r=p.check('بازدید دانشکاه. رئیس دانشکاه','fa');
+ const starts=[...new Set(r.filter(f=>f.original==='دانشکاه').map(f=>f.start))];
+ assert.equal(starts.length,2);
+ assert.equal(r.find(f=>f.start===starts[0]).replacement,'دانشگاه');
+ assert.equal(r.find(f=>f.start===starts[1]).replacement,'دانشکده');
+});
+test('frequency evidence is bounded and cannot add dictionary candidates or alter valid source',()=>{
+ const words=['دانشگاه','دانشکده'];
+ const p=createPersianLexiconProvider({words,wordFrequencies:[['دانشگاه',1000000],['دانشکده',1],['دانشکاه',999999]]});
+ const r=p.check('دانشکاه','fa');
+ assert.ok(r.length>0);assert.ok(r.every(f=>words.includes(f.replacement)));
+ assert.deepEqual(p.check('دانشگاه','fa'),[]);
+ assert.throws(()=>createPersianLexiconProvider({words,wordFrequencies:[['دانشگاه',-1]]}));
+ assert.throws(()=>createPersianLexiconProvider({words,wordFrequencies:[['دانشگاه',1],['دانشگاه',2]]}));
+ assert.throws(()=>createPersianLexiconProvider({words,rankingCorpus:['ABC 123']}));
+ const q=createPersianLexiconProvider({words,isKnownSource:w=>w==='دانشکاه',rankingCorpus:['بازدید دانشگاه']});
+ assert.deepEqual(q.check('دانشکاه','fa'),[]);
+});
