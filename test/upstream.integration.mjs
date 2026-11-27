@@ -247,6 +247,12 @@ test('external NeveshtYar published challenge subset (diagnostic, no training)',
   mkdirSync('qualification-artifacts',{recursive:true});
   writeFileSync('qualification-artifacts/external-neveshtyar.json',JSON.stringify({source:corpus.source,selection:corpus.selection,counts,rows},null,2));
   console.log('PWE_EXTERNAL_QUALIFICATION '+JSON.stringify({total:rows.length,counts}));
+  // Retain the observed external development-set baseline. No changes to
+  // the expected targets, including ambiguous or rare words.
+  assert.ok(counts['fa:fixed'].top1+counts['fa:reported-hard'].top1>=5,'External Persian top-1 regression');
+  assert.ok(counts['fa:fixed'].any+counts['fa:reported-hard'].any>=17,'External Persian candidate recall regression');
+  assert.ok(counts['en:fixed'].top1+counts['en:reported-hard'].top1>=4,'External English top-1 regression');
+  assert.ok(counts['en:fixed'].any+counts['en:reported-hard'].any>=10,'External English candidate recall regression');
  }finally{await p.dispose();}
 });
 

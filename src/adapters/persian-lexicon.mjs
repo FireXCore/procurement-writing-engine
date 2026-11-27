@@ -60,9 +60,9 @@ export function createPersianLexiconProvider({words,isKnownSource=()=>false,pref
     for(let i=0;i<a.length;i++){
       add([...a.slice(0,i),...a.slice(i+1)],a[i]===a[i-1]||a[i]===a[i+1]?6:2);
       if(i+1<a.length)add([...a.slice(0,i),a[i+1],a[i],...a.slice(i+2)],5);
-      for(const ch of alphabet)if(ch!==a[i])add([...a.slice(0,i),ch,...a.slice(i+1)],keyboardNeighbor(a[i],ch)?3:1);
+      for(const ch of alphabet)if(ch!==a[i])add([...a.slice(0,i),ch,...a.slice(i+1)],keyboardNeighbor(a[i],ch)?1.25:1);
     }
-    for(let i=0;i<=a.length;i++)for(const ch of alphabet)add([...a.slice(0,i),ch,...a.slice(i)],ch===a[i-1]||ch===a[i]?3.5:2);
+    for(let i=0;i<=a.length;i++)for(const ch of alphabet)add([...a.slice(0,i),ch,...a.slice(i)],ch===a[i-1]||ch===a[i]?2.25:2);
     // Fallback only for two distinct adjacent-repeat runs. Never general
     // two-edit search, never override a valid source, and abstain if there
     // is no known dictionary word after both deletions.

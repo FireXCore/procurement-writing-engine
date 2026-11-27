@@ -17,3 +17,5 @@ First external run: fixed examples EN 4/6 top1 and any, FA 2/5 top1 and 5/5 any;
 
 
 Persian ranking experiment: bounded keyboard proximity for substitutions and omitted repeated-letter insertion weight; no target additions, no new permissions, no change to exact-source abstention or domain prior. This uses general keyboard geometry, not a mapping of challenge misspellings to targets. The previously disclosed external subset is now a development/regression set, not unseen holdout. Historical synthetic quality floors remain mandatory. English engine is unchanged because absent candidates cannot be fixed by reordering and many hard targets are names or rare words. Final quality measured by CI.
+
+Initial keyboard-weight trial d57e186: synthetic baseline unchanged; external FA fixed top1 3/5, hard top1 1/30, any 18/35 combined. This is a net top1 regression from 5/35 to 4/35 despite candidate recall gain. Reduced adjacency and repeat insertion weights to within-operation tie breakers; added aggregate external development-set quality floors at bee13b4 values (FA 5 top1, 17 any; EN 4 top1, 10 any). No release until measured.
