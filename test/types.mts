@@ -27,3 +27,6 @@ void initTransformer;
 
 import {createAdaptiveReview,createPersianLexiconProvider,type PreferenceProfile} from '../src/index.mjs';
 const preferences=createAdaptiveReview();const profile:PreferenceProfile=preferences.exportProfile();const dictionaryProvider:Provider=createPersianLexiconProvider({words:['مشخصات']});void [profile,dictionaryProvider];
+
+import {prepareLilakDictionary,createLilakProvider,createLocalReviewProfile,type PackedLilakDictionary,type LocalReviewProfile} from '../src/index.mjs';
+const packed:PackedLilakDictionary=prepareLilakDictionary('1\nمشخصات','FLAG long');const lp:Provider=createLilakProvider(packed);const localProfile=():Promise<LocalReviewProfile>=>createLocalReviewProfile({languages:['fa'],persianDictionary:packed});void [lp,localProfile];

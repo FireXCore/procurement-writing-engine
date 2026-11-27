@@ -1,6 +1,4 @@
-import { createEngine, createHarper, createVirastar, createTextlint, procurementPolicyRules, createPersianLexiconProvider } from '../src/index.mjs';
-import {unpackDictionaryEvidence} from './dictionary-roots.mjs';
-import {formalSpellings,procurementWords} from './persian-formal-spellings.mjs';
+import { createEngine, createHarper, createVirastar, createTextlint, procurementPolicyRules, createLilakProvider } from '../src/index.mjs';
 self.onmessage=async({data})=>{
   let harper,stage='setup',dictionaryUsed=false,dictionaryError=false;
   function progress(next){stage=next;self.postMessage({type:'progress',stage});}
@@ -20,7 +18,7 @@ self.onmessage=async({data})=>{
           progress('dictionary-load');
           const {default:packed}=await import('virtual:pwe-persian-roots');
           progress('dictionary-init');
-          providers.push(createPersianLexiconProvider({...unpackDictionaryEvidence(packed),preferredSpellings:formalSpellings,preferredWords:procurementWords}));
+          providers.push(createLilakProvider(packed));
           dictionaryUsed=true;
         }catch{dictionaryError=true;}
       }

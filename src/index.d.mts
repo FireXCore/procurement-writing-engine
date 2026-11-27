@@ -54,3 +54,9 @@ export interface AdaptiveReviewSession { readonly groups:readonly Readonly<{lang
 export interface AdaptiveReview { prepare(document:DocumentSnapshot,analysis:Analysis):AdaptiveReviewSession;invalidate():void;exportProfile():PreferenceProfile;clear():void }
 export function createAdaptiveReview(options?:{readonly profile?:PreferenceProfile}):AdaptiveReview;
 export function createPersianLexiconProvider(options:{readonly words:readonly string[];readonly isKnownSource?:(word:string)=>boolean;readonly preferredSpellings?:readonly (readonly [string,string])[];readonly preferredWords?:readonly string[]}):Provider;
+
+export interface PackedLilakDictionary { readonly version:1; readonly words:string; readonly surfaces:string; readonly suffixes:readonly (readonly [string,readonly string[]])[] }
+export function prepareLilakDictionary(dic:string,aff:string):PackedLilakDictionary;
+export function createLilakProvider(packed:PackedLilakDictionary,options?:{readonly preferredSpellings?:readonly (readonly [string,string])[];readonly preferredWords?:readonly string[]}):Provider;
+export interface LocalReviewProfile extends Engine { readonly languages:readonly Language[];readonly dictionaryEnabled:boolean;dispose():Promise<void> }
+export function createLocalReviewProfile(options?:{readonly languages?:readonly Language[];readonly harperBinary?:unknown;readonly harperWorker?:boolean;readonly persianDictionary?:PackedLilakDictionary;readonly policies?:boolean}):Promise<LocalReviewProfile>;

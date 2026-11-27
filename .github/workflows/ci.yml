@@ -44,7 +44,7 @@ jobs:
         if: always()
         with:
           name: language-qualification
-          path: qualification-artifacts/quality.json
+          path: qualification-artifacts/*.json
           retention-days: 14
       - run: npm run build:demo
       - run: npm run test:browser

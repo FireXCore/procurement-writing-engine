@@ -28,10 +28,10 @@ export const procurementDeliveryRule = Object.freeze({
 const agreementPatterns = [
   {pattern:/(?:^|[.!?]\s+)((?:the\s+)?(?:information|equipment|documentation|advice|feedback|evidence)\s+)(are)(?=\s+(?:not\s+)?(?:available|unavailable|incomplete|complete|correct|incorrect|accurate|inaccurate|ready|required|missing|sufficient|insufficient|outdated|relevant|valid|invalid|attached|provided|received|requested|confirmed|verified|approved|being|included|needed)\b)/giu,replacement:'is'},
   {pattern:/(?:^|[.!?]\s+)((?:the\s+)?(?:information|documentation|advice|feedback|evidence)\s+)(were)(?=\s+(?:not\s+)?(?:available|unavailable|incomplete|complete|correct|incorrect|accurate|inaccurate|ready|required|missing|sufficient|insufficient|outdated|relevant|valid|invalid|attached|provided|received|requested|confirmed|verified|approved|being|included|needed)\b)/giu,replacement:'was'},
-  {pattern:/(?:^|[.!?]\s+|\bthat\s+)(each\s+of\s+the\s+(?:suppliers|vendors|manufacturers|contractors|buyers|customers)\s+)(have)(?=\s+(?:confirmed|submitted|provided|sent|received|accepted|rejected|approved|acknowledged)\b)/giu,replacement:'has'},
-  {pattern:/(?:^|[.!?]\s+|\bthat\s+)(the\s+equipment\s+)(were)(?=\s+(?:inspected|tested|delivered|installed|received|approved|repaired|shipped|available)\b)/giu,replacement:'was'},
-  {pattern:/(?:^|[.!?]\s+|\bthat\s+)(the\s+(?:supplier|vendor|manufacturer|contractor|buyer|customer)\s+)(have)(?=\s+\p{L})/giu,replacement:'has'},
-  {pattern:/(?:^|[.!?]\s+|\bthat\s+)(the\s+(?:goods|materials|items|documents|products|parts)\s+)(is)(?=\s+(?:available|ready|in stock|required|approved|complete)\b)/giu,replacement:'are'}
+  {pattern:/(?:^|[.!?]\s+)(each\s+of\s+the\s+(?:suppliers|vendors|manufacturers|contractors|buyers|customers)\s+)(have)(?=\s+(?:confirmed|submitted|provided|sent|received|accepted|rejected|approved|acknowledged)\b)/giu,replacement:'has'},
+  {pattern:/(?:^|[.!?]\s+)(the\s+equipment\s+)(were)(?=\s+(?:inspected|tested|delivered|installed|received|approved|repaired|shipped|available)\b)/giu,replacement:'was'},
+  {pattern:/(?:^|[.!?]\s+)(the\s+(?:supplier|vendor|manufacturer|contractor|buyer|customer)\s+)(have)(?=\s+\p{L})/giu,replacement:'has'},
+  {pattern:/(?:^|[.!?]\s+)(the\s+(?:goods|materials|items|documents|products|parts)\s+)(is)(?=\s+(?:available|ready|in stock|required|approved|complete)\b)/giu,replacement:'are'}
 ];
 function agreementReporter(context) {
   return {
@@ -41,10 +41,11 @@ function agreementReporter(context) {
       for(const {pattern,replacement} of agreementPatterns) {
         for(const match of source.matchAll(pattern)) {
           const original=match[2],end=match.index+match[0].length,start=end-original.length;
+          const fixed=original===original.toUpperCase()?replacement.toUpperCase():original[0]===original[0].toUpperCase()?replacement[0].toUpperCase()+replacement.slice(1):replacement;
           const range=[start,end];
           context.report(node,new context.RuleError('Review subject and verb agreement in this procurement phrase.',{
             padding:context.locator.range(range),
-            fix:context.fixer.replaceTextRange(range,replacement)
+            fix:context.fixer.replaceTextRange(range,fixed)
           }));
         }
       }

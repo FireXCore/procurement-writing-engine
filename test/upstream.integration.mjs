@@ -207,3 +207,45 @@ test('1024 synthetic bilingual spelling challenges with real pinned providers', 
   assert.equal(novel.controlsWithEdits,0);assert.equal(novel.unrelated,0);assert.equal(novel.partial,0);
  }finally{await harper?.dispose();}
 });
+
+test('published SDK local profile with real English and Persian providers, disposal and protected spans',async()=>{
+ const {prepareLilakDictionary,createLocalReviewProfile}=await import('../src/index.mjs');
+ const {default:dictionary}=await import('dictionary-fa');
+ const {binaryInlined}=await import('harper.js/binaryInlined');
+ const packed=prepareLilakDictionary(dictionary.dic.toString('utf8'),dictionary.aff.toString('utf8'));
+ const p=await createLocalReviewProfile({harperBinary:binaryInlined,persianDictionary:packed});
+ try{
+  const en='Please chek the quotation. ',fa='لطفا مشخسات را ارسال کنید. ',locked='LOCKED 123',text=en+fa+locked;
+  const doc={text,snapshotId:'public-profile',regions:[{start:0,end:en.length,kind:'prose',language:'en'},{start:en.length,end:en.length+fa.length,kind:'prose',language:'fa'},{start:en.length+fa.length,end:text.length,kind:'protected'}]};
+  const r=await p.analyze(doc);
+  assert.equal(r.status,'complete');assert.equal(r.apply,false);
+  for(const [a,b] of [['chek','check'],['لطفا','لطفاً'],['مشخسات','مشخصات']])assert.ok(r.findings.some(f=>f.original===a&&f.replacement===b),a);
+  assert.ok(r.findings.every(f=>f.end<=en.length+fa.length&&text.slice(f.start,f.end)===f.original));
+  assert.equal(p.dictionaryEnabled,true);
+  const a=p.dispose(),b=p.dispose();assert.equal(a,b);await a;
+  const closed=await p.analyze(doc);assert.equal(closed.status,'blocked');assert.equal(closed.findings.length,0);
+ }finally{await p.dispose();}
+});
+test('external NeveshtYar published challenge subset (diagnostic, no training)', {timeout:180000},async()=>{
+ const {readFileSync,mkdirSync,writeFileSync}=await import('node:fs');
+ const corpus=JSON.parse(readFileSync(new URL('./external/neveshtyar-challenge.json',import.meta.url),'utf8'));
+ const {default:dictionary}=await import('dictionary-fa');
+ const {binaryInlined}=await import('harper.js/binaryInlined');
+ const {prepareLilakDictionary,createLocalReviewProfile}=await import('../src/index.mjs');
+ const p=await createLocalReviewProfile({harperBinary:binaryInlined,persianDictionary:prepareLilakDictionary(dictionary.dic.toString('utf8'),dictionary.aff.toString('utf8'))});
+ const counts={},rows=[];
+ try{
+  for(const [i,c] of corpus.cases.entries()){
+   const key=c.language+':'+c.subset,m=counts[key]??={total:0,top1:0,any:0,abstained:0,partial:0};
+   const text=c.source,report=await p.analyze({text,snapshotId:'external:'+i,regions:[{start:0,end:text.length,kind:'prose',language:c.language}]});
+   const candidates=report.findings.filter(f=>f.start===0&&f.end===text.length&&f.original===text&&f.replacement!==undefined).map(f=>f.replacement);
+   m.total++;if(candidates[0]===c.target)m.top1++;if(candidates.includes(c.target))m.any++;if(!candidates.length)m.abstained++;if(report.status!=='complete')m.partial++;
+   assert.equal(report.apply,false);assert.ok(report.findings.every(f=>text.slice(f.start,f.end)===f.original));
+   rows.push({...c,candidates,status:report.status});
+  }
+  assert.equal(rows.length,71);
+  mkdirSync('qualification-artifacts',{recursive:true});
+  writeFileSync('qualification-artifacts/external-neveshtyar.json',JSON.stringify({source:corpus.source,selection:corpus.selection,counts,rows},null,2));
+  console.log('PWE_EXTERNAL_QUALIFICATION '+JSON.stringify({total:rows.length,counts}));
+ }finally{await p.dispose();}
+});

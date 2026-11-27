@@ -15,3 +15,5 @@ export {createTransformersProvider} from './adapters/transformers-runtime.mjs';
 
 export {createAdaptiveReview} from './adaptive-review.mjs';
 export {createPersianLexiconProvider} from './adapters/persian-lexicon.mjs';
+
+export {prepareLilakDictionary,createLilakProvider,createLocalReviewProfile} from './local-review-profile.mjs';
