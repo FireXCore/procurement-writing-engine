@@ -1,7 +1,5 @@
 name: Persian full-corpus experiment
 on:
-  pull_request:
-    paths: ['lab/mana/project_text.py', 'lab/mana/full-source.json', 'lab/mana/full.mjs', 'lab/mana/test_project_text.py', '.github/workflows/mana-full-experiment.yml']
   workflow_dispatch:
 permissions:
   contents: read

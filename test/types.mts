@@ -29,4 +29,7 @@ import {createAdaptiveReview,createPersianLexiconProvider,type PreferenceProfile
 const preferences=createAdaptiveReview();const profile:PreferenceProfile=preferences.exportProfile();const dictionaryProvider:Provider=createPersianLexiconProvider({words:['مشخصات']});void [profile,dictionaryProvider];
 
 import {prepareLilakDictionary,createLilakProvider,createLocalReviewProfile,type PackedLilakDictionary,type LocalReviewProfile} from '../src/index.mjs';
-const packed:PackedLilakDictionary=prepareLilakDictionary('1\nمشخصات','FLAG long');const lp:Provider=createLilakProvider(packed);const localProfile=():Promise<LocalReviewProfile>=>createLocalReviewProfile({languages:['fa'],persianDictionary:packed});void [lp,localProfile];
+const packed:PackedLilakDictionary=prepareLilakDictionary('1\nمشخصات','FLAG long\nSFX sd N 1\nSFX sd 0 ها/FFWW .');const lp:Provider=createLilakProvider(packed,{rankingCorpus:['مشخصات فنی'],wordFrequencies:[['مشخصات',12]]});const localProfile=():Promise<LocalReviewProfile>=>createLocalReviewProfile({languages:['fa'],persianDictionary:packed});void [lp,localProfile];
+
+// @ts-expect-error frequency evidence must contain numeric counts
+createLilakProvider(packed,{wordFrequencies:[['مشخصات','12']]});
