@@ -21,3 +21,14 @@ test('approved hamza variants improve typo candidates without rewriting valid fo
  const q=createPersianLexiconProvider({words:['مشخصات'],preferredSpellings:[['تایید','تأیید']]});
  assert.deepEqual(q.check('تاییید','fa'),[]);
 });
+
+test('domain prior and repeat recovery are bounded, retain alternatives, and never override source evidence',()=>{
+ const words=['تاخیر','تاخیری','تاسیسات','تاسسیسات','تاکید','بررسی','بریسی','استعلام','سفارش'];
+ const p=createPersianLexiconProvider({words,preferredSpellings:[['تاخیر','تأخیر'],['تاسیسات','تأسیسات'],['تاکید','تأکید']],preferredWords:['تأخیر','تأسیسات','تأکید','بررسی','استعلام','سفارش','ناشناخته'],isKnownSource:w=>['استعلامم','سفارشش'].includes(w)});
+ for(const [a,b] of [['تاخییر','تأخیر'],['تاسیسسات','تأسیسات'],['تاککیید','تأکید'],['برریسی','بررسی']]){
+  const r=p.check(a,'fa');assert.equal(r[0]?.replacement,b,a);assert.ok(r.every(f=>f.original===a&&f.start===0&&f.end===a.length));
+ }
+ for(const word of ['تاخیری','بریسی','استعلامم','سفارشش','تاخیر','تأخیر'])assert.deepEqual(p.check(word,'fa'),[],word);
+ assert.ok(p.check('ناشناختت','fa').every(f=>f.replacement!=='ناشناخته'));
+ assert.throws(()=>createPersianLexiconProvider({words,preferredWords:['ABC123']}));
+});

@@ -6,3 +6,6 @@ The upstream integration suite now also measures 1,024 synthetic spelling templa
 
 
 2026-11-27 baseline verified: 256/256 EN, 208/256 FA, zero controls with edits. Failure artifact contains 16 occurrences each of مستندت (potential possessive), ضمانتت (potential possessive), and تاییید (proposed تایید rather than تأیید). Historical strict scores retained; ambiguity and acceptable variant measurements added separately. Host-approved hamza aliases only rank variants of existing dictionary words; no rewriting valid forms, no semantic synonyms, no automatic apply. Demo supplies 12 reviewed alias pairs. Added 240 separate Persian synthetic variants and actual dictionary probes; not independently curated natural-language holdout.
+
+
+Second measured baseline 62d49e5: EN 256/256, FA 224/256 exact; 32 possible possessive forms abstained; all 512 controls unchanged. New 240-template suite: 72/120 first, 96/120 any, 0/120 controls with edits. Added optional host-owned domain preference on known dictionary candidates, increased weight for repeated-letter deletion, and restricted two-repeat deletion fallback only when no one-edit candidate exists. Exact source evidence still prevails. CI now gates against both measured baselines and control/safety regressions. No claims of independent natural-language accuracy.

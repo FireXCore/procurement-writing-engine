@@ -8,7 +8,7 @@ const split=x=>[...graphemes.segment(x)].map(s=>s.segment);
 const letters=/^[آابتثجحخدذرزژسشصضطظعغفقکگلمنوهیپچئءؤأإ]{3,24}$/u;
 const normalize=x=>x.normalize('NFC').replace(/[يك]/gu,c=>c==='ي'?'ی':'ک');
 const MAX_WORDS=250000, MAX_TOKENS=100, MAX_CANDIDATES=4;
-export function createPersianLexiconProvider({words,isKnownSource=()=>false,preferredSpellings=[]}={}){
+export function createPersianLexiconProvider({words,isKnownSource=()=>false,preferredSpellings=[],preferredWords=[]}={}){
   if(!Array.isArray(words)||!words.length||words.length>MAX_WORDS)throw new TypeError('Invalid Persian lexicon');
   if(typeof isKnownSource!=='function')throw new TypeError('Invalid source evidence');
   const dictionary=new Set();
@@ -33,6 +33,10 @@ export function createPersianLexiconProvider({words,isKnownSource=()=>false,pref
       dictionary.add(alias);dictionary.add(target);
     }else preferred.delete(alias);
   }
+  // Optional domain prior ranks existing valid candidates only. It cannot
+  // override exact source evidence or make an unknown target valid.
+  if(!Array.isArray(preferredWords)||preferredWords.length>512||preferredWords.some(w=>typeof w!=='string'||!w.isWellFormed()||!letters.test(w)))throw new TypeError('Invalid preferred words');
+  const domain=new Set(preferredWords.map(normalize).filter(w=>dictionary.has(w)));
   const cache=new Map();
   function candidates(source){
     if(cache.has(source))return cache.get(source);
@@ -45,12 +49,21 @@ export function createPersianLexiconProvider({words,isKnownSource=()=>false,pref
       if(target&&target!==source&&(!found.has(target)||found.get(target)<weight+0.25))found.set(target,weight+0.25);
     }
     for(let i=0;i<a.length;i++){
-      add([...a.slice(0,i),...a.slice(i+1)],a[i]===a[i-1]||a[i]===a[i+1]?4:2);
+      add([...a.slice(0,i),...a.slice(i+1)],a[i]===a[i-1]||a[i]===a[i+1]?6:2);
       if(i+1<a.length)add([...a.slice(0,i),a[i+1],a[i],...a.slice(i+2)],5);
       for(const ch of alphabet)if(ch!==a[i])add([...a.slice(0,i),ch,...a.slice(i+1)],1);
     }
     for(let i=0;i<=a.length;i++)for(const ch of alphabet)add([...a.slice(0,i),ch,...a.slice(i)],2);
-    const result=[...found].sort((a,b)=>b[1]-a[1]||(a[0]<b[0]?-1:a[0]>b[0]?1:0)).slice(0,MAX_CANDIDATES).map(x=>x[0]);
+    // Fallback only for two distinct adjacent-repeat runs. Never general
+    // two-edit search, never override a valid source, and abstain if there
+    // is no known dictionary word after both deletions.
+    if(!found.size){
+      const repeats=[];
+      for(let i=1;i<a.length;i++)if(a[i]===a[i-1]&&(i<2||a[i]!==a[i-2]))repeats.push(i);
+      for(let i=0;i<repeats.length;i++)for(let j=i+1;j<repeats.length;j++)add(a.filter((_,k)=>k!==repeats[i]&&k!==repeats[j]),1);
+    }
+    const rank=([word,weight])=>weight+(domain.has(word)?5:0);
+    const result=[...found].sort((a,b)=>rank(b)-rank(a)||(a[0]<b[0]?-1:a[0]>b[0]?1:0)).slice(0,MAX_CANDIDATES).map(x=>x[0]);
     if(cache.size>=512)cache.delete(cache.keys().next().value);cache.set(source,result);return result;
   }
   return Object.freeze({id:'fa-lexicon',languages:Object.freeze(['fa']),check(text,language,signal){

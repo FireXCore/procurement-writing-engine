@@ -53,4 +53,4 @@ export interface ReviewCandidate { readonly finding:Finding; readonly sources:re
 export interface AdaptiveReviewSession { readonly groups:readonly Readonly<{language:Language;candidates:readonly ReviewCandidate[]}>[];record(groupIndex:number,candidateIndex:number,decision:'prefer'|'reject'):boolean }
 export interface AdaptiveReview { prepare(document:DocumentSnapshot,analysis:Analysis):AdaptiveReviewSession;invalidate():void;exportProfile():PreferenceProfile;clear():void }
 export function createAdaptiveReview(options?:{readonly profile?:PreferenceProfile}):AdaptiveReview;
-export function createPersianLexiconProvider(options:{readonly words:readonly string[];readonly isKnownSource?:(word:string)=>boolean;readonly preferredSpellings?:readonly (readonly [string,string])[]}):Provider;
+export function createPersianLexiconProvider(options:{readonly words:readonly string[];readonly isKnownSource?:(word:string)=>boolean;readonly preferredSpellings?:readonly (readonly [string,string])[];readonly preferredWords?:readonly string[]}):Provider;

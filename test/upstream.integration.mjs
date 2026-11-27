@@ -151,8 +151,8 @@ test('1024 synthetic bilingual spelling challenges with real pinned providers', 
  try{
   harper=await createHarper({binary:binaryInlined,worker:false});
   const evidence=unpackDictionaryEvidence(packDictionaryEvidence(parseDictionaryEvidence(dictionary.dic.toString('utf8'),dictionary.aff.toString('utf8'))));
-  const {formalSpellings}=await import('../demo/persian-formal-spellings.mjs');
-  const lexicon=createPersianLexiconProvider({...evidence,preferredSpellings:formalSpellings});
+  const {formalSpellings,procurementWords}=await import('../demo/persian-formal-spellings.mjs');
+  const lexicon=createPersianLexiconProvider({...evidence,preferredSpellings:formalSpellings,preferredWords:procurementWords});
   const e=createEngine([harper.provider,await createTextlint(procurementPolicyRules),await createVirastar(),lexicon]);
   let total=0;
   for(const [lang,pairs,frames] of [['en',en,enFrames],['fa',fa,faFrames]]){
@@ -197,5 +197,13 @@ test('1024 synthetic bilingual spelling challenges with real pinned providers', 
   mkdirSync('qualification-artifacts',{recursive:true});
   writeFileSync('qualification-artifacts/quality.json',JSON.stringify({kind:'synthetic-template-spelling-challenge',total,counts,failures,ambiguity,variants,novel,novelFailures,dictionaryProbes},null,2));
   console.log('PWE_LANGUAGE_QUALIFICATION '+JSON.stringify({total,counts,ambiguity,variants,novel,dictionaryProbes}));
+  // Enforce the measured exact historical baseline and source safety. Novel
+  // scores are tracked separately; do not redefine ambiguous possessives
+  // as mandatory errors merely to make exact recall equal 100%.
+  assert.equal(counts.en.top1,256);assert.ok(counts.fa.top1>=224);
+  for(const m of Object.values(counts)){assert.equal(m.controlWithEdits,0);assert.equal(m.extraCases,0);assert.equal(m.partial,0);}
+  assert.equal(ambiguity.abstained,32);assert.equal(variants.accepted,16);
+  assert.ok(novel.top1>=72);assert.ok(novel.any>=96);
+  assert.equal(novel.controlsWithEdits,0);assert.equal(novel.unrelated,0);assert.equal(novel.partial,0);
  }finally{await harper?.dispose();}
 });
