@@ -19,11 +19,14 @@ const manifest=JSON.parse(readFileSync(new URL('./sources.json',import.meta.url)
 const input=process.argv[2];if(!input)throw new Error('Explicit evaluation input directory required');
 const dict=prepareLilakDictionary(dictionary.dic.toString('utf8'),dictionary.aff.toString('utf8'));
 const start=performance.now(),pwe=createLilakProvider(dict),pweSetupMs=performance.now()-start;
+const frequencyPath=process.argv[3];
+const frequencyAsset=frequencyPath?JSON.parse(readFileSync(frequencyPath,'utf8')):null;
+const frequencyProvider=frequencyAsset?createLilakProvider(dict,{wordFrequencies:frequencyAsset.wordFrequencies}):null;
 const nsStart=performance.now(),ns=nspell(dictionary),nspellSetupMs=performance.now()-nsStart;
-function pweReview(source){
+function pweReview(source,provider=pwe){
  if(!eligible(source,'fa'))return {candidates:[],partial:true};
  try{
-  const findings=pwe.check(source,'fa');
+  const findings=provider.check(source,'fa');
   assert.ok(findings.every(f=>f.start===0&&f.end===source.length&&f.original===source&&validReplacement(source,f.replacement,'fa')));
   return {candidates:[...new Set(findings.map(f=>f.replacement))].slice(0,4),partial:false};
  }catch(error){if(error instanceof RangeError)return {candidates:[],partial:true};throw error;}
@@ -47,6 +50,7 @@ for(const f of manifest.files){
  assert.equal(createHash('sha256').update(raw).digest('hex'),f.sha256);
  const data=parseFaSpell(new TextDecoder('utf-8',{fatal:true}).decode(raw),f.rows);
  report.datasets[f.id]={sha256:f.sha256,selection:data.counts,pwe:summarizeCases(data.cases,pweReview),nspell:summarizeCases(data.cases,nspellReview),cascade:summarizeCases(data.cases,cascade),vetoCascade:summarizeCases(data.cases,vetoCascade)};
+ if(frequencyProvider)report.datasets[f.id].manaSample=summarizeCases(data.cases,w=>pweReview(w,frequencyProvider));
  console.log('PWE_FASPELL '+JSON.stringify({dataset:f.id,...report.datasets[f.id]}));
 }
 mkdirSync('qualification-artifacts',{recursive:true});writeFileSync('qualification-artifacts/faspell-comparison.json',JSON.stringify(report,null,2));

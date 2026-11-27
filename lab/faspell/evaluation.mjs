@@ -3,7 +3,8 @@ const simple=/^[آابتثجحخدذرزژسشصضطظعغفقکگلمنوهیپ
 const norm=s=>s.trim().normalize('NFC').replace(/[يك]/gu,c=>c==='ي'?'ی':'ک');
 // Match the original dataset's tab-delimited CSV reader: quoted fields,
 // CR/LF/CRLF, doubled quotes and blank records. Do not silently drop errors.
-function records(raw){
+export function records(raw,delimiter='\t'){
+ if(![',','\t'].includes(delimiter))throw new TypeError('Invalid delimiter');
  const text=raw.replace(/^\uFEFF/u,'').replace(/\r\n?/gu,'\n'),out=[];
  let row=[],field='',quoted=false,closed=false;
  const pushField=()=>{row.push(field);field='';closed=false;};
@@ -15,7 +16,7 @@ function records(raw){
    else field+=c;
    continue;
   }
-  if(c==='\t'){pushField();continue;}
+  if(c===delimiter){pushField();continue;}
   if(c==='\n'){pushRow();continue;}
   if(closed)throw new Error('Invalid quoted TSV field');
   if(c==='"'&&field===''){quoted=true;continue;}

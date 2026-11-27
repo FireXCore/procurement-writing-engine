@@ -1,7 +1,7 @@
 name: Persian real-error comparison
 on:
   pull_request:
-    paths: ['src/**', 'lab/faspell/**', 'test/faspell-evaluation.test.mjs', '.github/workflows/persian-qualification.yml']
+    paths: ['src/**', 'lab/faspell/**', 'lab/mana/**', 'test/mana-frequency.test.mjs', 'test/faspell-evaluation.test.mjs', '.github/workflows/persian-qualification.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -40,12 +40,17 @@ jobs:
             execFileSync('curl',['--fail','--silent','--show-error','--proto','=https','--max-time','60','--max-filesize','200000','--output',process.env.RUNNER_TEMP+'/faspell/'+f.id+'.txt',f.url],{stdio:'inherit'});
           }
           JS
-      - run: node lab/faspell/run.mjs "$RUNNER_TEMP/faspell"
+      - name: Build pinned ManaTTS sample evidence (no audio)
+        run: |
+          curl --fail --silent --show-error --proto '=https' --max-time 60 --max-filesize 20000 --output "$RUNNER_TEMP/mana.csv" https://raw.githubusercontent.com/MahtaFetrat/ManaTTS-Persian-Speech-Dataset/5ee92110143b01cdf46ee27e0df1cb7ebb39a7f0/sample_data/metadata.csv
+          node lab/mana/run.mjs "$RUNNER_TEMP/mana.csv"
+      - run: node lab/faspell/run.mjs "$RUNNER_TEMP/faspell" qualification-artifacts/mana-sample-frequency.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: faspell-comparison
           path: |
             qualification-artifacts/faspell-comparison.json
+            qualification-artifacts/mana-sample-frequency.json
             lab/faspell/package-lock.json
           retention-days: 14
