@@ -249,3 +249,13 @@ test('external NeveshtYar published challenge subset (diagnostic, no training)',
   console.log('PWE_EXTERNAL_QUALIFICATION '+JSON.stringify({total:rows.length,counts}));
  }finally{await p.dispose();}
 });
+
+test('real Textlint factual embedded agreement remains distinct from subjunctive clauses',async()=>{
+ const p=await createTextlint([procurementAgreementRule]),e=createEngine([p]);
+ const positive='The supplier have confirmed that the goods is available.';
+ const r=await e.analyze(snap(positive,'en'));
+ assert.deepEqual(r.findings.map(f=>[f.original,f.replacement]),[['have','has'],['is','are']]);
+ for(const s of ['We require that the supplier have confirmed the quotation.','We recommend that each of the suppliers have submitted a certificate.','Suppose that the equipment were available.','We require that the goods be available.']){
+   const result=await e.analyze(snap(s,'en'));assert.deepEqual(result.findings,[],s);
+ }
+});

@@ -31,7 +31,9 @@ const agreementPatterns = [
   {pattern:/(?:^|[.!?]\s+)(each\s+of\s+the\s+(?:suppliers|vendors|manufacturers|contractors|buyers|customers)\s+)(have)(?=\s+(?:confirmed|submitted|provided|sent|received|accepted|rejected|approved|acknowledged)\b)/giu,replacement:'has'},
   {pattern:/(?:^|[.!?]\s+)(the\s+equipment\s+)(were)(?=\s+(?:inspected|tested|delivered|installed|received|approved|repaired|shipped|available)\b)/giu,replacement:'was'},
   {pattern:/(?:^|[.!?]\s+)(the\s+(?:supplier|vendor|manufacturer|contractor|buyer|customer)\s+)(have)(?=\s+\p{L})/giu,replacement:'has'},
-  {pattern:/(?:^|[.!?]\s+)(the\s+(?:goods|materials|items|documents|products|parts)\s+)(is)(?=\s+(?:available|ready|in stock|required|approved|complete)\b)/giu,replacement:'are'}
+  // Plural subject + indicative "is" after explicit factual reporting.
+  // Do not reopen the blanket "that" prefix for other agreement rules.
+  {pattern:/(?:^|[.!?]\s+|\b(?:confirmed|reported|stated|verified|noted|indicated)\s+that\s+)(the\s+(?:goods|materials|items|documents|products|parts)\s+)(is)(?=\s+(?:available|ready|in stock|required|approved|complete)\b)/giu,replacement:'are'}
 ];
 function agreementReporter(context) {
   return {

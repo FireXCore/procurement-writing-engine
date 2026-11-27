@@ -26,4 +26,6 @@ test('local policy abstains from embedded subjunctive and hypothetical clauses',
    reports.length=0;check(s);assert.equal(reports.length,0,s);
  }
  reports.length=0;check('The supplier have received the quotation.');assert.equal(reports.length,1);assert.equal(reports[0].fix.replacement,'has');
+ reports.length=0;check('The supplier have confirmed that the goods is available.');assert.deepEqual(reports.map(x=>x.fix.replacement),['has','are']);
+ reports.length=0;check('We require that the goods be available.');assert.equal(reports.length,0);
 });
