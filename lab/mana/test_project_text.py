@@ -1,6 +1,6 @@
 import io
 import unittest
-from project_text import RangeFile, Budget
+from project_text import RangeFile, Budget, project_row
 
 class Response:
     def __init__(self, status=206, content_range="bytes 2-4/10", data=b"abc"):
@@ -29,4 +29,15 @@ class TestRange(unittest.TestCase):
             with self.assertRaises(ValueError):f.read(3)
         with self.assertRaises(ValueError):f.read()
         with self.assertRaises(ValueError):f.seek(-1)
+class TestProjection(unittest.TestCase):
+    def test_missing_values_and_quality_accounting(self):
+        cols=["file name","transcript","match quality"]
+        def row(id_,text,quality):
+            return project_row(dict(zip(cols,[id_,text,quality])),cols)
+        self.assertEqual(row("1-2.wav","کتاب","HIGH"),({"id":"1-2.wav","text":"کتاب","quality":"HIGH"},None))
+        self.assertEqual(row("1-2.wav",None,"REJECT"),({"id":"1-2.wav","text":"","quality":"REJECT"},None))
+        self.assertEqual(row("1-2.wav",None,"HIGH"),(None,"invalid-high-transcript"))
+        self.assertEqual(row("1-2.wav","کتاب",None),(None,"invalid-quality"))
+        self.assertEqual(row(None,"کتاب","HIGH"),(None,"invalid-id"))
+        self.assertEqual(row("../1.wav","کتاب","HIGH"),(None,"invalid-id"))
 if __name__=="__main__":unittest.main()

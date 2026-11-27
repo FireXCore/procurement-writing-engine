@@ -118,6 +118,20 @@ class RangeFile(io.RawIOBase):
         b[:len(data)] = data
         return len(data)
 
+# Never coerce missing or non-string fields to a valid transcript. Exclusions
+# are accounted independently from the downstream alignment-quality filter.
+def project_row(item, columns):
+    id_, text, quality = (item[c] for c in columns)
+    if not isinstance(id_, str) or not re.fullmatch(r"[0-9]{1,8}-[0-9]{1,8}\.wav", id_):
+        return None, "invalid-id"
+    if quality not in ("HIGH", "MIDDLE", "REJECT"):
+        return None, "invalid-quality"
+    if quality != "HIGH":
+        return {"id":id_,"text":"","quality":quality}, None
+    if not isinstance(text, str) or not text.strip() or len(text)>2000:
+        return None, "invalid-high-transcript"
+    return {"id":id_,"text":text,"quality":quality}, None
+
 def project(shard, budget):
     import pyarrow as pa
     import pyarrow.parquet as pq
@@ -130,19 +144,20 @@ def project(shard, budget):
                 raise ValueError("Unexpected Parquet schema")
             if not 1 <= reader.metadata.num_rows <= MAX_ROWS:
                 raise ValueError("Unexpected shard rows")
-            rows = []
+            rows, excluded = [], {}
             for batch in reader.iter_batches(batch_size=512, columns=columns, use_threads=False):
                 if batch.schema.names != columns:
                     raise ValueError("Projection mismatch")
                 for item in batch.to_pylist():
-                    row = {k: item[c] for k,c in zip(("id","text","quality"),columns)}
-                    if any(not isinstance(v,str) for v in row.values()):
-                        raise ValueError("Invalid projected value")
-                    rows.append(row)
-            if len(rows) != reader.metadata.num_rows:
+                    row, reason = project_row(item,columns)
+                    if reason:
+                        excluded[reason] = excluded.get(reason,0)+1
+                    else:
+                        rows.append(row)
+            if len(rows)+sum(excluded.values()) != reader.metadata.num_rows:
                 raise ValueError("Incomplete shard projection")
             payload = json.dumps(rows, ensure_ascii=False, sort_keys=True, separators=(",",":")).encode("utf-8")
-            return rows, {"part":shard["part"],"rows":len(rows),"projectionSha256":hashlib.sha256(payload).hexdigest(),"requests":source.requests}
+            return rows, {"part":shard["part"],"rows":len(rows),"inputRows":reader.metadata.num_rows,"excluded":excluded,"projectionSha256":hashlib.sha256(payload).hexdigest(),"requests":source.requests}
 
 def main(output):
     files = get_inventory()
@@ -154,14 +169,18 @@ def main(output):
             projected.append(info)
             if len(rows)>MAX_ROWS: raise ValueError("Too many corpus rows")
             print("MANA_PROJECTED", json.dumps(info), flush=True)
-    if not 50000 <= len(rows) <= MAX_ROWS:
+    input_rows = sum(p["inputRows"] for p in projected)
+    excluded_rows = input_rows - len(rows)
+    if not 50000 <= input_rows <= MAX_ROWS:
         raise ValueError("Full corpus row count implausible")
+    if excluded_rows > input_rows * .05:
+        raise ValueError("More than 5% malformed metadata; do not promote this corpus")
     payload = {"source":MANIFEST,"inventory":files,"projections":projected,"reservedTransferBytes":budget.used,"rows":rows}
     path = Path(output)
     tmp = path.with_suffix(".tmp")
     tmp.write_text(json.dumps(payload,ensure_ascii=False,separators=(",",":")),encoding="utf-8")
     tmp.replace(path)
-    print("MANA_FULL_PROJECTED",json.dumps({"shards":len(files),"rows":len(rows),"reservedTransferBytes":budget.used}))
+    print("MANA_FULL_PROJECTED",json.dumps({"shards":len(files),"inputRows":input_rows,"excludedRows":excluded_rows,"rows":len(rows),"reservedTransferBytes":budget.used}))
 
 if __name__ == "__main__":
     if len(sys.argv)!=2: raise SystemExit("Explicit temporary output required")

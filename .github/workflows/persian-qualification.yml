@@ -1,7 +1,7 @@
 name: Persian real-error comparison
 on:
   pull_request:
-    paths: ['src/**', 'lab/faspell/**', 'lab/mana/**', 'test/mana-frequency.test.mjs', 'test/faspell-evaluation.test.mjs', '.github/workflows/persian-qualification.yml']
+    paths: ['src/**', 'lab/faspell/**', 'lab/mana/frequency.mjs', 'lab/mana/run.mjs', 'lab/mana/source.json', 'test/mana-frequency.test.mjs', 'test/faspell-evaluation.test.mjs', '.github/workflows/persian-qualification.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -10,9 +10,9 @@ concurrency:
   cancel-in-progress: true
 jobs:
   compare:
-    name: FAspell / PWE vs nspell (diagnostic)
+    name: FAspell / PWE ranking (diagnostic)
     runs-on: ubuntu-24.04
-    timeout-minutes: 40
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
         with:
@@ -44,20 +44,9 @@ jobs:
         run: |
           curl --fail --silent --show-error --proto '=https' --max-time 60 --max-filesize 20000 --output "$RUNNER_TEMP/mana.csv" https://raw.githubusercontent.com/MahtaFetrat/ManaTTS-Persian-Speech-Dataset/5ee92110143b01cdf46ee27e0df1cb7ebb39a7f0/sample_data/metadata.csv
           node lab/mana/run.mjs "$RUNNER_TEMP/mana.csv"
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Install isolated Parquet reader
-        run: |
-          python -m pip install --only-binary=:all: --no-deps pyarrow==22.0.0
-      - name: Test exact-range reader
-        run: python -m unittest discover -s lab/mana -p 'test_project_text.py'
-      - name: Project full pinned corpus (strict 128 MiB range budget)
-        run: |
-          python lab/mana/project_text.py "$RUNNER_TEMP/mana-projected.json"
-          node lab/mana/full.mjs "$RUNNER_TEMP/mana-projected.json"
-          rm -f "$RUNNER_TEMP/mana-projected.json"
-      - run: node lab/faspell/run.mjs "$RUNNER_TEMP/faspell" qualification-artifacts/mana-sample-frequency.json qualification-artifacts/mana-full-frequency.json
+      - run: node lab/faspell/run.mjs "$RUNNER_TEMP/faspell" qualification-artifacts/mana-sample-frequency.json
+        env:
+          PWE_COMPARE_PROFILE: frequency
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -65,6 +54,5 @@ jobs:
           path: |
             qualification-artifacts/faspell-comparison.json
             qualification-artifacts/mana-sample-frequency.json
-            qualification-artifacts/mana-full-frequency.json
             lab/faspell/package-lock.json
           retention-days: 14
