@@ -8,7 +8,7 @@ const split=x=>[...graphemes.segment(x)].map(s=>s.segment);
 const letters=/^[آابتثجحخدذرزژسشصضطظعغفقکگلمنوهیپچئءؤأإ]{3,24}$/u;
 const normalize=x=>x.normalize('NFC').replace(/[يك]/gu,c=>c==='ي'?'ی':'ک');
 const MAX_WORDS=250000, MAX_TOKENS=100, MAX_CANDIDATES=4;
-export function createPersianLexiconProvider({words,isKnownSource=()=>false}={}){
+export function createPersianLexiconProvider({words,isKnownSource=()=>false,preferredSpellings=[]}={}){
   if(!Array.isArray(words)||!words.length||words.length>MAX_WORDS)throw new TypeError('Invalid Persian lexicon');
   if(typeof isKnownSource!=='function')throw new TypeError('Invalid source evidence');
   const dictionary=new Set();
@@ -16,13 +16,33 @@ export function createPersianLexiconProvider({words,isKnownSource=()=>false}={})
     if(typeof w!=='string'||!w.isWellFormed()||!letters.test(normalize(w)))throw new TypeError('Invalid Persian lexeme');
     dictionary.add(normalize(w));
   }
+  // Host-approved orthographic aliases, not an arbitrary synonym map.
+  // Only hamza placement variants of known words may influence candidates.
+  // Already-valid spellings are never reported merely for using an alias.
+  if(!Array.isArray(preferredSpellings)||preferredSpellings.length>128)throw new TypeError('Invalid preferred spellings');
+  const preferred=new Map(),canonical=new Set();
+  const fold=w=>w.replace(/[أإ]/gu,'ا').replace(/ؤ/gu,'و').replace(/ئ/gu,'ی');
+  for(const pair of preferredSpellings){
+    if(!Array.isArray(pair)||pair.length!==2||pair.some(w=>typeof w!=='string'||!w.isWellFormed()||!letters.test(w)))throw new TypeError('Invalid orthographic alias');
+    const [alias,target]=pair.map(normalize);
+    if(alias===target||fold(alias)!==fold(target)||preferred.has(alias)||canonical.has(alias)||preferred.has(target))throw new TypeError('Conflicting orthographic alias');
+    preferred.set(alias,target);canonical.add(target);
+  }
+  for(const [alias,target] of preferred){
+    if(dictionary.has(alias)||dictionary.has(target)){
+      dictionary.add(alias);dictionary.add(target);
+    }else preferred.delete(alias);
+  }
   const cache=new Map();
   function candidates(source){
     if(cache.has(source))return cache.get(source);
     const a=split(source),found=new Map();
     function add(parts,weight){
       const w=parts.join('');
-      if(w!==source&&dictionary.has(w)&&(!found.has(w)||found.get(w)<weight))found.set(w,weight);
+      if(w===source||!dictionary.has(w))return;
+      if(!found.has(w)||found.get(w)<weight)found.set(w,weight);
+      const target=preferred.get(w);
+      if(target&&target!==source&&(!found.has(target)||found.get(target)<weight+0.25))found.set(target,weight+0.25);
     }
     for(let i=0;i<a.length;i++){
       add([...a.slice(0,i),...a.slice(i+1)],a[i]===a[i-1]||a[i]===a[i+1]?4:2);

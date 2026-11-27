@@ -146,12 +146,14 @@ test('1024 synthetic bilingual spelling challenges with real pinned providers', 
  const fa=[['مشخسات','مشخصات'],['تجیهزات','تجهیزات'],['پشنهاد','پیشنهاد'],['مستندت','مستندات'],['قراداد','قرارداد'],['محمولهه','محموله'],['پردخات','پرداخت'],['تحویلل','تحویل'],['گزارشس','گزارش'],['تضیمین','تضمین'],['ضمانتت','ضمانت'],['تاییید','تأیید'],['دستگها','دستگاه'],['استعالام','استعلام'],['درخاست','درخواست'],['بازرسیی','بازرسی']];
  const enFrames=['Please verify the {w}.','Please confirm the {w}.','We received the {w}.','We reviewed the {w}.','The {w} is required.','The {w} was received.','Please update the {w}.','Please send the {w}.','We await the {w}.','Please check the {w}.','Please review the {w}.','Please attach the {w}.','Please provide the {w}.','We need the {w}.','Please submit the {w}.','Please prepare the {w}.'];
  const faFrames=['لطفاً {w} را بررسی کنید.','لطفاً {w} را ارسال کنید.','لطفاً {w} را تأیید کنید.','لطفاً {w} را اعلام کنید.','{w} را دریافت کردیم.','{w} را بررسی کردیم.','{w} ارسال شد.','{w} لازم است.','{w} دریافت شد.','لطفاً درباره {w} اطلاع دهید.','لطفاً {w} را پیگیری کنید.','لطفاً {w} را آماده کنید.','لطفاً {w} را ارائه کنید.','لطفاً {w} را تکمیل کنید.','لطفاً {w} را ارسال فرمایید.','لطفاً {w} را بررسی فرمایید.'];
- const counts={},failures=[];
+ const counts={},failures=[],ambiguity={cases:0,abstained:0},variants={cases:0,accepted:0},novel={cases:0,positive:0,top1:0,any:0,controls:0,controlsWithEdits:0,unrelated:0,partial:0},novelFailures=[];
  let harper;
  try{
   harper=await createHarper({binary:binaryInlined,worker:false});
   const evidence=unpackDictionaryEvidence(packDictionaryEvidence(parseDictionaryEvidence(dictionary.dic.toString('utf8'),dictionary.aff.toString('utf8'))));
-  const e=createEngine([harper.provider,await createTextlint(procurementPolicyRules),await createVirastar(),createPersianLexiconProvider(evidence)]);
+  const {formalSpellings}=await import('../demo/persian-formal-spellings.mjs');
+  const lexicon=createPersianLexiconProvider({...evidence,preferredSpellings:formalSpellings});
+  const e=createEngine([harper.provider,await createTextlint(procurementPolicyRules),await createVirastar(),lexicon]);
   let total=0;
   for(const [lang,pairs,frames] of [['en',en,enFrames],['fa',fa,faFrames]]){
    const m=counts[lang]={cases:0,positive:0,control:0,top1:0,any:0,extraCases:0,controlWithEdits:0,partial:0};
@@ -165,13 +167,35 @@ test('1024 synthetic bilingual spelling challenges with real pinned providers', 
     const top=[...first.values()],at=text.indexOf(wrong),match=f=>dirty&&f.start===at&&f.original===wrong&&f.replacement===right;
     const hit=top.some(match),extra=top.some(f=>!dirty||f.start!==at||f.end!==at+wrong.length);
     if(dirty){m.positive++;if(edits.some(match))m.any++;if(hit)m.top1++;}else{m.control++;if(edits.length)m.controlWithEdits++;}
+    if(dirty&&lang==='fa'&&['مستندت','ضمانتت'].includes(wrong)){ambiguity.cases++;if(!edits.some(f=>f.start===at&&f.original===wrong))ambiguity.abstained++;}
+    if(dirty&&wrong==='تاییید'){variants.cases++;if(top.some(f=>f.start===at&&f.original===wrong&&['تایید','تأیید'].includes(f.replacement)))variants.accepted++;}
     if(extra)m.extraCases++;
     if((dirty&&!hit)||extra||r.status!=='complete')failures.push({lang,text,expected:dirty?[wrong,right]:null,top:top.map(f=>[f.original,f.replacement]),status:r.status,diagnostics:r.diagnostics});
    }
   }
   assert.equal(total,1024);
+  // A separate, new word-family suite. Do not alter historical exact scoring.
+  const novelWords=[['تاممین','تأمین'],['تاخییر','تأخیر'],['تاسیسسات','تأسیسات'],['تاککیید','تأکید'],['برریسی','بررسی'],['ارسسال','ارسال'],['مکاتبهه','مکاتبه'],['مذاکرره','مذاکره'],['گواهینامه','گواهینامه'],['بازرگانیی','بازرگانی'],['مهندسیی','مهندسی'],['پیمانکارر','پیمانکار'],['انبارر','انبار'],['استانداردد','استاندارد'],['استعلامم','استعلام'],['سفارشش','سفارش']].filter(([a,b])=>a!==b);
+  const novelFrames=['مدارک مربوط به {w} آماده است.','لطفاً درباره {w} توضیح دهید.','موضوع {w} در جلسه مطرح شد.','گزارش {w} را دریافت کردیم.','نتیجه {w} را اعلام کنید.','کارشناس موضوع {w} را بررسی کرد.','درخواست مربوط به {w} ثبت شد.','لطفاً وضعیت {w} را مشخص کنید.'];
+  for(const [wrong,right] of novelWords)for(const frame of novelFrames)for(const dirty of [true,false]){
+    const text=frame.replace('{w}',dirty?wrong:right),p=buildResearchSnapshot(text,'LOCKED 123','novel:'+novel.cases),r=await e.analyze(p.document);
+    novel.cases++;
+    assert.equal(r.apply,false);assert.ok(r.findings.every(f=>p.document.regions.some(x=>x.kind==='prose'&&f.start>=x.start&&f.end<=x.end)&&p.document.text.slice(f.start,f.end)===f.original));
+    if(r.status!=='complete'||p.skipped||p.suspectedRanges)novel.partial++;
+    const edits=r.findings.filter(f=>f.replacement!==undefined),groups=new Map();
+    for(const f of edits){const k=JSON.stringify([f.start,f.end,f.provider,f.rule]);if(!groups.has(k))groups.set(k,f);}
+    const top=[...groups.values()],at=text.indexOf(wrong),match=f=>dirty&&f.start===at&&f.original===wrong&&f.replacement===right;
+    if(dirty){novel.positive++;if(edits.some(match))novel.any++;if(top.some(match))novel.top1++;}else{novel.controls++;if(edits.length)novel.controlsWithEdits++;}
+    const extra=top.some(f=>!dirty||f.start!==at||f.end!==at+wrong.length);
+    if(extra)novel.unrelated++;
+    if((dirty&&!top.some(match))||extra||r.status!=='complete')novelFailures.push({text,expected:dirty?[wrong,right]:null,top:top.map(f=>[f.original,f.replacement]),status:r.status});
+  }
+  assert.equal(novel.cases,240);
+  // Explicit ambiguous wordforms are counted separately, never forced into
+  // a replacement. Report actual dictionary evidence for the three misses.
+  const dictionaryProbes=['مستندت','مستندات','ضمانتت','ضمانت','تاییید','تایید','تأیید'].map(word=>({word,root:evidence.words.includes(word),sourceEvidence:evidence.isKnownSource(word),proposals:lexicon.check(word,'fa').map(f=>f.replacement)}));
   mkdirSync('qualification-artifacts',{recursive:true});
-  writeFileSync('qualification-artifacts/quality.json',JSON.stringify({kind:'synthetic-template-spelling-challenge',total,counts,failures},null,2));
-  console.log('PWE_LANGUAGE_QUALIFICATION '+JSON.stringify({total,counts}));
+  writeFileSync('qualification-artifacts/quality.json',JSON.stringify({kind:'synthetic-template-spelling-challenge',total,counts,failures,ambiguity,variants,novel,novelFailures,dictionaryProbes},null,2));
+  console.log('PWE_LANGUAGE_QUALIFICATION '+JSON.stringify({total,counts,ambiguity,variants,novel,dictionaryProbes}));
  }finally{await harper?.dispose();}
 });
