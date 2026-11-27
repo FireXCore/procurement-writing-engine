@@ -1,0 +1,18 @@
+import {readFileSync,writeFileSync,mkdirSync,statSync} from 'node:fs';
+import assert from 'node:assert/strict';
+import {buildEvidence} from './frequency.mjs';
+const path=process.argv[2];if(!path)throw Error('Explicit projected corpus required');
+assert.ok(statSync(path).size<=64000000);
+const payload=JSON.parse(readFileSync(path,'utf8')),manifest=JSON.parse(readFileSync(new URL('./full-source.json',import.meta.url),'utf8'));
+assert.deepEqual(payload.source,manifest);
+assert.ok(Array.isArray(payload.inventory)&&payload.inventory.length>=60&&payload.inventory.length<=100);
+assert.equal(payload.projections.length,payload.inventory.length);
+assert.ok(payload.reservedTransferBytes<=manifest.maxTransferBytes);
+assert.equal(payload.projections.reduce((n,p)=>n+p.rows,0),payload.rows.length);
+assert.ok(payload.rows.length>=50000&&payload.rows.length<=manifest.maxRows);
+const data=buildEvidence(payload.rows);
+assert.ok(data.counts.train>=10000&&data.counts.validation>0&&data.counts.test>0);
+assert.ok(data.wordFrequencies.length>1000);
+mkdirSync('qualification-artifacts',{recursive:true});
+writeFileSync('qualification-artifacts/mana-full-frequency.json',JSON.stringify({schema:1,kind:'full pinned corpus projection, high alignment quality, train split only',source:manifest,inventory:payload.inventory,projections:payload.projections,reservedTransferBytes:payload.reservedTransferBytes,...data},null,2));
+console.log('PWE_MANA_FULL '+JSON.stringify({counts:data.counts,groups:data.groups,unigrams:data.wordFrequencies.length,bigrams:data.bigramFrequencies.length,shards:payload.inventory.length,reservedTransferBytes:payload.reservedTransferBytes}));

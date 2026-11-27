@@ -20,8 +20,11 @@ const input=process.argv[2];if(!input)throw new Error('Explicit evaluation input
 const dict=prepareLilakDictionary(dictionary.dic.toString('utf8'),dictionary.aff.toString('utf8'));
 const start=performance.now(),pwe=createLilakProvider(dict),pweSetupMs=performance.now()-start;
 const frequencyPath=process.argv[3];
+const fullFrequencyPath=process.argv[4];
 const frequencyAsset=frequencyPath?JSON.parse(readFileSync(frequencyPath,'utf8')):null;
 const frequencyProvider=frequencyAsset?createLilakProvider(dict,{wordFrequencies:frequencyAsset.wordFrequencies}):null;
+const fullAsset=fullFrequencyPath?JSON.parse(readFileSync(fullFrequencyPath,'utf8')):null;
+const fullProvider=fullAsset?createLilakProvider(dict,{wordFrequencies:fullAsset.wordFrequencies}):null;
 const nsStart=performance.now(),ns=nspell(dictionary),nspellSetupMs=performance.now()-nsStart;
 function pweReview(source,provider=pwe){
  if(!eligible(source,'fa'))return {candidates:[],partial:true};
@@ -51,6 +54,7 @@ for(const f of manifest.files){
  const data=parseFaSpell(new TextDecoder('utf-8',{fatal:true}).decode(raw),f.rows);
  report.datasets[f.id]={sha256:f.sha256,selection:data.counts,pwe:summarizeCases(data.cases,pweReview),nspell:summarizeCases(data.cases,nspellReview),cascade:summarizeCases(data.cases,cascade),vetoCascade:summarizeCases(data.cases,vetoCascade)};
  if(frequencyProvider)report.datasets[f.id].manaSample=summarizeCases(data.cases,w=>pweReview(w,frequencyProvider));
+ if(fullProvider)report.datasets[f.id].manaFull=summarizeCases(data.cases,w=>pweReview(w,fullProvider));
  console.log('PWE_FASPELL '+JSON.stringify({dataset:f.id,...report.datasets[f.id]}));
 }
 mkdirSync('qualification-artifacts',{recursive:true});writeFileSync('qualification-artifacts/faspell-comparison.json',JSON.stringify(report,null,2));

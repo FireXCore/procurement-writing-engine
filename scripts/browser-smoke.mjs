@@ -197,7 +197,7 @@ try{
     }
     if(c.id==='fa-halfspace')assert.deepEqual(pairs,['می کنیم → می‌کنیم','می کنیم. → می‌کنیم.']);
     if(c.inferred)assert.ok(details.includes('Inferred identifier ranges: '+c.inferred+'.'),c.id);
-    if(c.clean){assert.equal(await page.locator('html').getAttribute('data-analysis-status'),'complete',c.id);assert.equal(await page.locator('#findings li').count(),0,c.id);}
+    if(c.clean){assert.equal(await page.locator('html').getAttribute('data-analysis-status'),'complete',c.id+' '+details+' '+await page.locator('#status').innerText());assert.equal(await page.locator('#findings li').count(),0,c.id);}
     if(c.protected)assert.ok(details.includes('Protected inline ranges: '+c.protected.length+'.'),c.id+' '+details);
     for(const token of c.protected??[])assert.ok(!findings.includes(token),c.id);
     console.log('Browser acceptance: '+c.id+' PASS');
