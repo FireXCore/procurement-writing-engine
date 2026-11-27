@@ -7,6 +7,15 @@ const graphemes=new Intl.Segmenter('fa',{granularity:'grapheme'});
 const split=x=>[...graphemes.segment(x)].map(s=>s.segment);
 const letters=/^[آابتثجحخدذرزژسشصضطظعغفقکگلمنوهیپچئءؤأإ]{3,24}$/u;
 const normalize=x=>x.normalize('NFC').replace(/[يك]/gu,c=>c==='ي'?'ی':'ک');
+// Common Persian standard keyboard letter positions. Approximate physical
+// adjacency is weak evidence, not a lexical or semantic rule.
+const keyboardRows=['ضصثقفغعهخحجچ','شسیبلاتنمکگ','ظطزرذدپو'];
+const positions=new Map();
+for(const [y,row] of keyboardRows.entries())for(const [x,ch] of [...row].entries())positions.set(ch,[x+[0,0.25,0.75][y],y]);
+function keyboardNeighbor(a,b){
+  const p=positions.get(a),q=positions.get(b);
+  return !!p&&!!q&&a!==b&&Math.abs(p[1]-q[1])<=1&&Math.abs(p[0]-q[0])<=1.25;
+}
 const MAX_WORDS=250000, MAX_TOKENS=100, MAX_CANDIDATES=4;
 export function createPersianLexiconProvider({words,isKnownSource=()=>false,preferredSpellings=[],preferredWords=[]}={}){
   if(!Array.isArray(words)||!words.length||words.length>MAX_WORDS)throw new TypeError('Invalid Persian lexicon');
@@ -51,9 +60,9 @@ export function createPersianLexiconProvider({words,isKnownSource=()=>false,pref
     for(let i=0;i<a.length;i++){
       add([...a.slice(0,i),...a.slice(i+1)],a[i]===a[i-1]||a[i]===a[i+1]?6:2);
       if(i+1<a.length)add([...a.slice(0,i),a[i+1],a[i],...a.slice(i+2)],5);
-      for(const ch of alphabet)if(ch!==a[i])add([...a.slice(0,i),ch,...a.slice(i+1)],1);
+      for(const ch of alphabet)if(ch!==a[i])add([...a.slice(0,i),ch,...a.slice(i+1)],keyboardNeighbor(a[i],ch)?3:1);
     }
-    for(let i=0;i<=a.length;i++)for(const ch of alphabet)add([...a.slice(0,i),ch,...a.slice(i)],2);
+    for(let i=0;i<=a.length;i++)for(const ch of alphabet)add([...a.slice(0,i),ch,...a.slice(i)],ch===a[i-1]||ch===a[i]?3.5:2);
     // Fallback only for two distinct adjacent-repeat runs. Never general
     // two-edit search, never override a valid source, and abstain if there
     // is no known dictionary word after both deletions.

@@ -32,3 +32,14 @@ test('domain prior and repeat recovery are bounded, retain alternatives, and nev
  assert.ok(p.check('ناشناختت','fa').every(f=>f.replacement!=='ناشناخته'));
  assert.throws(()=>createPersianLexiconProvider({words,preferredWords:['ABC123']}));
 });
+
+test('keyboard proximity and omitted repeated letters rank existing candidates, not arbitrary corrections',()=>{
+ const p=createPersianLexiconProvider({words:['جمله','جمعه','جرقه','برنامه','برننه','پوییدی','پوسیدی'],isKnownSource:w=>w==='برنامه'});
+ const a=p.check('جمقه','fa');assert.ok(a.some(f=>f.replacement==='جمله'));assert.ok(a.every(f=>f.original==='جمقه'));
+ const q=createPersianLexiconProvider({words:['پوییدی','پوسیدی','پوشیدی']});
+ assert.equal(q.check('پویدی','fa')[0]?.replacement,'پوییدی');
+ assert.deepEqual(p.check('برنامه','fa'),[]);
+ const z=createPersianLexiconProvider({words:['کلاه','کلام','کلاغ']});
+ assert.deepEqual(z.check('کلاه','fa'),[]);
+ assert.ok(z.check('کلاهک','fa').every(f=>['کلاه','کلام','کلاغ'].includes(f.replacement)));
+});
