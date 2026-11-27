@@ -21,3 +21,9 @@ Verify ManaTTS text-only source provenance and rights; freeze revision and disjo
 No Alpha 8 publication or production deployment for this change. Next gate: obtain real report; investigate missed and false suggestions; assess browser memory and latency before choosing any new dependency. Existing thresholds remain mandatory. No invented progress percentage.
 
 Initial CI passed dependency installation, audit, download and SHA verification but failed strict TSV schema/count parsing. Support CSV quoting, blank records and CR line endings; retain locked row counts and log only structural diagnostics. No quality result yet.
+
+## Measured baseline — d176458
+
+Human 3,633 distinct eligible pairs: PWE top1 1,532, top4 2,345, gold controls with edits 55, abstained 929, P95 pair latency 0.459 ms; nspell top1 1,699, top4 2,557, controls 76, abstained 305, P95 2.381 ms. OCR 550 pairs: PWE top1 25, top4 85, controls 16; nspell top1 59, top4 123, controls 27. Both zero partial. PWE has lower gold-control suggestion counts and latency, nspell has higher exact-target recall. Do not replace core.
+
+Two diagnostic cascade variants: retain primary proposals and fill only absent candidates with nspell, or additionally veto primary proposals when nspell accepts source. Both preserve primary short-word abstention and existing root, alias and suffix source evidence; reject fallback candidates outside bounded OSA distance 2 or not accepted by nspell. No new runtime dependency. This is a development comparison, not a blind holdout. Isolated word-level measurements cannot certify document-level or mobile performance. Aggregate paired-control edits and runtime must be considered before promotion. No raw benchmark text is exported.

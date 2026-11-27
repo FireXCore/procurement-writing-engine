@@ -21,3 +21,24 @@ test('FAspell accepts CSV quoting, blank records, and legacy CR line endings',()
  assert.equal(r.counts.rows,2);assert.equal(r.counts.eligible,2);
  assert.throws(()=>parseFaSpell('#misspelt\tcorrected\n"مشخسات\tمشخصات\n',1));
 });
+
+import {createCascade,editDistance} from '../lab/faspell/cascade.mjs';
+test('cascade fills only absent candidates, respects known sources and bounds edit distance',()=>{
+ const good=new Set(['مشخصات','تجهیزات','اطلاعات','فنی','مشخصاتی']);
+ let calls=0;
+ const primary=w=>({candidates:w==='تجیهزات'?['تجهیزات']:w==='پردازش'?['پرداخت']:[],partial:w==='ناقص'});
+ const secondary=()=>{calls++;return {candidates:['مشخصات','اطلاعات','مشخصات','<tag>'],partial:false};};
+ const mode={primary,secondary,knownSource:w=>w==='مشخصاتی',secondaryCorrect:w=>good.has(w)||w==='پردازش'};
+ const f=createCascade(mode),v=createCascade({...mode,vetoPrimary:true});
+ assert.deepEqual(f('مشخسات').candidates,['مشخصات']);assert.equal(calls,1);
+ assert.deepEqual(f('تجیهزات').candidates,['تجهیزات']);
+ assert.deepEqual(f('فنی').candidates,[]);
+ assert.deepEqual(f('مشخصاتی').candidates,[]);
+ assert.deepEqual(f('مشخصات').candidates,[]);
+ assert.equal(f('ناقص').partial,true);assert.equal(calls,1);
+ assert.deepEqual(f('پردازش').candidates,['پرداخت']);
+ assert.deepEqual(v('پردازش').candidates,[]);
+ assert.equal(editDistance('مشخسات','مشخصات'),1);
+ assert.equal(editDistance('تجیهزات','تجهیزات'),1);
+ assert.equal(editDistance('مشخسات','<tag>'),Infinity);
+});
