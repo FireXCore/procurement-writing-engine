@@ -28,6 +28,31 @@ export function orthographyEdits(source,target){
     const left=source.slice(start,end),right=target.slice(bs,be);
     if(left===right)return;
     const x=words(left),y=words(right);
+    // A joined/split word plus an adjacent tanwin/glyph edit should not become
+    // one long suggestion. Partition only when each local cluster has the
+    // same folded letters/punctuation and identical external separators.
+    // No fuzzy alignment or semantic rewrite is allowed in this path.
+    if(x.length&&y.length&&x.length!==y.length){
+      const fold=s=>s.normalize('NFC').replace(/[يك]/gu,c=>c==='ي'?'ی':'ک').replace(/[\s\u200c\u064b-\u065f\u0670]/gu,'');
+      const local=[];let i=0,j=0,p=0,q=0,ok=true;
+      while(i<x.length&&j<y.length){
+        if(left.slice(p,x[i].start)!==right.slice(q,y[j].start)){ok=false;break;}
+        let chosen=null;
+        for(const [nx,ny] of [[1,1],[2,1],[1,2],[3,1],[1,3]]){
+          if(i+nx>x.length||j+ny>y.length)continue;
+          const xe=x[i+nx-1].end,ye=y[j+ny-1].end;
+          const l=left.slice(x[i].start,xe),r=right.slice(y[j].start,ye);
+          if(fold(l)&&fold(l)===fold(r)){chosen={nx,ny,xe,ye};break;}
+        }
+        if(!chosen){ok=false;break;}
+        local.push([start+x[i].start,start+chosen.xe,bs+y[j].start,bs+chosen.ye]);
+        p=chosen.xe;q=chosen.ye;i+=chosen.nx;j+=chosen.ny;
+      }
+      if(ok&&i===x.length&&j===y.length&&left.slice(p)===right.slice(q)){
+        for(const args of local)add(...args);
+        return;
+      }
+    }
     // Equal word counts and identical separators permit individual word patches.
     if(x.length&&x.length===y.length){
       let prev=0,next=0,aligned=true;

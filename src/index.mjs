@@ -4,3 +4,16 @@ export {createVirastar,normalizerAdapter,experimentalVirastarAdapter,VIRASTAR_OP
 export {textlintAdapter,createTextlint} from './adapters/textlint.mjs';
 export {languageToolAdapter,ste100Adapter,valeAdapter} from './adapters/reports.mjs';
 export {procurementDeliveryRule,procurementAgreementRule,procurementPolicyRules} from './policy.mjs';
+
+export {resolveSourceRange} from './offsets.mjs';
+export {protectEntitySpans} from './protection.mjs';
+export {createContextualProvider} from './adapters/contextual.mjs';
+
+export {createLocalGenerationProvider} from './adapters/local-generation.mjs';
+
+export {createTransformersProvider} from './adapters/transformers-runtime.mjs';
+
+export {createAdaptiveReview} from './adaptive-review.mjs';
+export {createPersianLexiconProvider} from './adapters/persian-lexicon.mjs';
+
+export {prepareLilakDictionary,createLilakProvider,createLocalReviewProfile} from './local-review-profile.mjs';

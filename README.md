@@ -41,7 +41,7 @@ The default recommended deployment profile is Harper for English and Virastar fo
 After the required CI gates pass and a prerelease appears on [GitHub Releases](https://github.com/FireXCore/procurement-writing-engine/releases), download the alpha tarball and `SHA256SUMS.txt`, verify the checksum, then install the local file. Public source alone does not indicate that a release artifact has passed qualification. Registry distribution is prepared separately; check the npm package page for actual availability. Use only the alpha dist-tag, not a stable release claim.
 
 ```sh
-npm install ./procurement-writing-engine-0.1.0-alpha.7.tgz
+npm install ./procurement-writing-engine-0.1.0-alpha.8.tgz # only after the alpha.8 release exists
 npm install --save-exact harper.js@3.2.0 virastar@0.22.1
 ```
 
@@ -141,3 +141,28 @@ Persian normalization now yields independent source-anchored word or short phras
 ### Alpha.4 formal Persian spelling
 
 The default Virastar adapter composes its restricted upstream normalizer with a small local formal-writing allowlist (e.g. لطفا → لطفاً, حتما → حتماً). Only exact unmarked words are eligible; ordinary final-alef words and already marked words are not changed by this policy. Suggestions remain review-only, within authoritative prose ranges. This is not general Persian spelling or diacritization.
+
+
+### Integrated local review profile (alpha.8 candidate)
+
+The public SDK now exposes the same pinned-provider composition used by the browser qualification path, with an explicit optional Lilak dictionary. Hosts supply local assets and authoritative region maps. No data download, remote model, or automatic apply is introduced.
+
+```js
+import { binaryInlined } from 'harper.js/binaryInlined';
+import dictionary from 'dictionary-fa'; // optional, host installs the exact licensed version
+import { prepareLilakDictionary, createLocalReviewProfile } from 'procurement-writing-engine';
+
+const packed = prepareLilakDictionary(dictionary.dic.toString('utf8'), dictionary.aff.toString('utf8'));
+const profile = await createLocalReviewProfile({ harperBinary: binaryInlined, persianDictionary: packed });
+try {
+  // authoritativeDocument is supplied by the authenticated host.
+  const report = await profile.analyze(authoritativeDocument);
+  // Review proposals only; report.apply is always false.
+} finally {
+  await profile.dispose();
+}
+```
+
+For Persian only, pass `languages: ['fa']`; no Harper binary is needed. The optional dictionary supports a conservative subset of Lilak long-flag morphology, not full Hunspell. Hosts can prepare packed assets at build time. The SDK does not distribute dictionary bytes. This is prerelease source, not a publication receipt.
+
+Optional Persian ranking: `createLocalReviewProfile({harperBinary, persianDictionary, persianRanking:{rankingCorpus,wordFrequencies}})` accepts host-reviewed Persian strings and `[word,count]` tuples. The default profile includes small curated procurement collocations; no public frequency corpus is distributed. Context and counts can only reorder eligible dictionary candidates, and never train on reviewed user documents. Do not pass unreviewed customer text as a ranking corpus.

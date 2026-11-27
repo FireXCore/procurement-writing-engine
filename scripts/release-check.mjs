@@ -10,7 +10,7 @@ assert.equal(pkg.publishConfig?.registry,'https://registry.npmjs.org/');
 assert.ok(pkg.version.includes('-alpha.'),'This pipeline publishes alpha only');
 assert.ok(existsSync('package-lock.json'),'A real resolved lockfile is mandatory');
 const lock=JSON.parse(readFileSync('package-lock.json','utf8'));
-assert.equal(lock.name,pkg.name);assert.equal(lock.version,pkg.version);
+assert.equal(lock.name,pkg.name);assert.equal(lock.version,pkg.version);assert.equal(lock.packages['']?.version,pkg.version);
 for(const [name,version] of Object.entries(pkg.devDependencies))assert.equal(lock.packages[`node_modules/${name}`]?.version,version,`Exact dependency ${name} not locked`);
 for(const [name,p] of Object.entries(lock.packages)){if(!name)continue;assert.ok(typeof p.integrity==='string'&&p.integrity.startsWith('sha'),'Unverified dependency: '+name);assert.ok(p.resolved?.startsWith('https://registry.npmjs.org/'),'Non-registry dependency: '+name);}
 const cli=process.platform==='win32'?'npm.cmd':'npm';
@@ -19,4 +19,6 @@ const result=JSON.parse(execFileSync(cli,['pack','--dry-run','--ignore-scripts',
 assert.equal(result.length,1);const files=result[0].files.map(x=>x.path);
 assert.ok(files.includes('src/index.mjs')&&files.includes('src/index.d.mts')&&files.includes('LICENSE'));
 for(const path of files)assert.ok(!/(^|\/)(\.env(?:\.|$)|node_modules|\.git|dist|release-artifacts)(\/|$)|\.(?:wasm|onnx|gguf|pem|key|pfx|zip)$/i.test(path),`Unexpected release file ${path}`);
+for(const path of files)assert.ok(!/^(?:lab|test|qualification-artifacts|demo)\//u.test(path),'Research/demo asset in SDK: '+path);
+assert.ok(files.includes('src/local-review-profile.mjs')&&files.includes('src/lilak-dictionary.mjs'),'Integrated local profile missing');
 console.log('Release manifest and exact registry lock checks: PASS');

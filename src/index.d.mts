@@ -28,3 +28,35 @@ export const procurementPolicyRules:readonly TextlintRule[];
 export function languageToolAdapter(check:(text:string,language:Language,signal?:AbortSignal)=>Promise<unknown>):Provider;
 export function ste100Adapter(check:(text:string,signal?:AbortSignal)=>Promise<unknown>):Provider;
 export function valeAdapter(check:(text:string,signal?:AbortSignal)=>Promise<unknown>):Provider;
+
+export interface SourceSpan { readonly unit:'utf16'|'codepoint'|'utf8'; readonly start:number; readonly end:number; readonly original:string }
+export function resolveSourceRange(source:string,span:SourceSpan):Readonly<{start:number;end:number;original:string}>;
+export function protectEntitySpans(document:DocumentSnapshot,batch:{readonly snapshotId:string;readonly spans:readonly SourceSpan[]}):DocumentSnapshot;
+export interface ContextualCandidate extends SourceSpan { readonly category:Category; readonly replacement:string }
+export function createContextualProvider(options:{readonly languages?:readonly Language[];readonly infer:(input:Readonly<{text:string;language:Language;signal?:AbortSignal}>)=>readonly ContextualCandidate[]|Promise<readonly ContextualCandidate[]>}):Provider;
+
+export interface LocalGenerationMessage { readonly role:'system'|'user'; readonly content:string }
+export interface LocalGenerationOptions { readonly do_sample:false; readonly max_new_tokens:384; readonly num_return_sequences:1; readonly return_full_text:false }
+export function createLocalGenerationProvider(options:{readonly languages?:readonly Language[];readonly generator:(messages:LocalGenerationMessage[],options:LocalGenerationOptions,signal?:AbortSignal)=>unknown|Promise<unknown>}):Provider;
+
+export type LocalModelPrecision = 'q4'|'q4f16'|'q8'|'fp16'|'fp32';
+export interface TransformersRuntime {
+  readonly env:{readonly allowRemoteModels:boolean;readonly allowLocalModels:boolean};
+  readonly pipeline:(task:'text-generation',model:string,options:{device:'webgpu'|'wasm';dtype:LocalModelPrecision;local_files_only:true})=>Promise<unknown>;
+  readonly InterruptableStoppingCriteria?:new()=>{interrupt():void};
+}
+export function createTransformersProvider(options:{readonly runtime:TransformersRuntime;readonly model:string;readonly device?:'webgpu'|'wasm';readonly dtype?:LocalModelPrecision;readonly fallbackToWasm?:boolean;readonly wasmDtype?:LocalModelPrecision;readonly languages?:readonly Language[]}):Promise<{readonly provider:Provider;readonly device:'webgpu'|'wasm';readonly dtype:LocalModelPrecision;dispose():Promise<void>}>;
+
+export interface PreferenceRecord { readonly language:Language; readonly original:string; readonly replacement:string; readonly accepted:number; readonly rejected:number }
+export interface PreferenceProfile { readonly version:1; readonly records:readonly PreferenceRecord[] }
+export interface ReviewCandidate { readonly finding:Finding; readonly sources:readonly Readonly<{provider:string;rule:string;message:string}>[]; readonly learnable:boolean; readonly preference:number }
+export interface AdaptiveReviewSession { readonly groups:readonly Readonly<{language:Language;candidates:readonly ReviewCandidate[]}>[];record(groupIndex:number,candidateIndex:number,decision:'prefer'|'reject'):boolean }
+export interface AdaptiveReview { prepare(document:DocumentSnapshot,analysis:Analysis):AdaptiveReviewSession;invalidate():void;exportProfile():PreferenceProfile;clear():void }
+export function createAdaptiveReview(options?:{readonly profile?:PreferenceProfile}):AdaptiveReview;
+export function createPersianLexiconProvider(options:{readonly words:readonly string[];readonly isKnownSource?:(word:string)=>boolean;readonly preferredSpellings?:readonly (readonly [string,string])[];readonly preferredWords?:readonly string[];readonly rankingCorpus?:readonly string[];readonly wordFrequencies?:readonly (readonly [string,number])[]}):Provider;
+
+export interface PackedLilakDictionary { readonly version:1; readonly words:string; readonly surfaces:string; readonly suffixes:readonly (readonly [string,readonly string[]])[] }
+export function prepareLilakDictionary(dic:string,aff:string):PackedLilakDictionary;
+export function createLilakProvider(packed:PackedLilakDictionary,options?:{readonly preferredSpellings?:readonly (readonly [string,string])[];readonly preferredWords?:readonly string[];readonly rankingCorpus?:readonly string[];readonly wordFrequencies?:readonly (readonly [string,number])[]}):Provider;
+export interface LocalReviewProfile extends Engine { readonly languages:readonly Language[];readonly dictionaryEnabled:boolean;dispose():Promise<void> }
+export function createLocalReviewProfile(options?:{readonly languages?:readonly Language[];readonly harperBinary?:unknown;readonly harperWorker?:boolean;readonly persianDictionary?:PackedLilakDictionary;readonly persianRanking?:{readonly rankingCorpus?:readonly string[];readonly wordFrequencies?:readonly (readonly [string,number])[]};readonly policies?:boolean}):Promise<LocalReviewProfile>;

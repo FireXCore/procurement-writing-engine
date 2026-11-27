@@ -1,0 +1,14 @@
+import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
+import {createHash} from 'node:crypto';
+import assert from 'node:assert/strict';
+import {readMetadataCSV,buildEvidence} from './frequency.mjs';
+const manifest=JSON.parse(readFileSync(new URL('./source.json',import.meta.url),'utf8'));
+const input=process.argv[2];if(!input)throw Error('Explicit sample path required');
+const bytes=readFileSync(input);
+assert.equal(bytes.length,manifest.bytes);
+assert.equal(createHash('sha1').update('blob '+bytes.length+'\0').update(bytes).digest('hex'),manifest.gitBlob);
+const data=buildEvidence(readMetadataCSV(new TextDecoder('utf-8',{fatal:true}).decode(bytes)));
+assert.equal(data.counts.input,50);assert.ok(data.counts.train>0&&data.wordFrequencies.length>0);
+mkdirSync('qualification-artifacts',{recursive:true});
+writeFileSync('qualification-artifacts/mana-sample-frequency.json',JSON.stringify({schema:1,source:manifest,kind:'small sample build-time diagnostic; not full ManaTTS',...data},null,2));
+console.log('PWE_MANA_SAMPLE '+JSON.stringify({counts:data.counts,groups:data.groups,unigrams:data.wordFrequencies.length,bigrams:data.bigramFrequencies.length}));

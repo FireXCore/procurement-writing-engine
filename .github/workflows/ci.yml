@@ -40,6 +40,12 @@ jobs:
       - run: npm ci --ignore-scripts --no-fund
       - run: npm run typecheck
       - run: npm run test:upstream
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: language-qualification
+          path: qualification-artifacts/*.json
+          retention-days: 14
       - run: npm run build:demo
       - run: npm run test:browser
       - run: npm audit --audit-level=high
@@ -52,33 +58,33 @@ jobs:
           npm pack --ignore-scripts --pack-destination "$tmp"
           cd "$tmp"
           printf '%s\n' '{"name":"pwe-consumer-smoke","version":"0.0.0","private":true,"type":"module"}' > package.json
-          npm install --ignore-scripts --no-audit --no-fund "./procurement-writing-engine-0.1.0-alpha.7.tgz" harper.js@3.2.0 virastar@0.22.1
+          npm install --ignore-scripts --no-audit --no-fund "./procurement-writing-engine-0.1.0-alpha.8.tgz" harper.js@3.2.0 virastar@0.22.1 @textlint/kernel@16.1.3 @textlint/textlint-plugin-text@16.1.3 dictionary-fa@2.0.0
           node --input-type=module <<'JS'
           import assert from 'node:assert/strict';
           import {binaryInlined} from 'harper.js/binaryInlined';
-          import {createEngine,createHarper,createVirastar} from 'procurement-writing-engine';
+          import dictionary from 'dictionary-fa';
+          import {createLocalReviewProfile,prepareLilakDictionary,createLilakProvider} from 'procurement-writing-engine';
           import {createLocalLanguageTool} from 'procurement-writing-engine/node';
           assert.equal(typeof createLocalLanguageTool,'function');
-          const harper=await createHarper({binary:binaryInlined,worker:false});
+          const packed=prepareLilakDictionary(dictionary.dic.toString('utf8'),dictionary.aff.toString('utf8'));
+          assert.ok(createLilakProvider(packed,{wordFrequencies:[['مشخصات',12]]}).check('مشخسات','fa').some(f=>f.replacement==='مشخصات'));
+          const profile=await createLocalReviewProfile({harperBinary:binaryInlined,persianDictionary:packed});
           try {
-            const engine=createEngine([harper.provider,await createVirastar()]);
-            const prose='Please send teh quotation for ';
-            const technical='ABC999';
-            const text=prose+technical;
-            const r=await engine.analyze({text,snapshotId:'npm-smoke',regions:[{start:0,end:prose.length,kind:'prose',language:'en'},{start:prose.length,end:text.length,kind:'protected'}]});
+            const en='Please send teh quotation. ';
+            const fa='لطفا مشخسات را ارسال کنید. ';
+            const locked='ABC999 150#';
+            const text=en+fa+locked;
+            const document={text,snapshotId:'packed-alpha8',regions:[{start:0,end:en.length,kind:'prose',language:'en'},{start:en.length,end:en.length+fa.length,kind:'prose',language:'fa'},{start:en.length+fa.length,end:text.length,kind:'protected'}]};
+            const r=await profile.analyze(document);
             assert.equal(r.status,'complete');
             assert.equal(r.apply,false);
-            assert.ok(r.findings.some(x=>x.original==='teh'&&x.replacement==='the'));
-            assert.ok(r.findings.every(x=>x.start>=0&&x.end<=prose.length&&text.slice(x.start,x.end)===x.original));
-            const fa='لطفا مدارك فني را ارسال کنید.';
-            const f=await engine.analyze({text:fa,snapshotId:'npm-fa-smoke',regions:[{start:0,end:fa.length,kind:'prose',language:'fa'}]});
-            assert.equal(f.status,'complete');
-            assert.equal(f.apply,false);
-            assert.ok(f.findings.some(x=>x.original==='لطفا'&&x.replacement==='لطفاً'));
-          } finally {await harper.dispose();}
+            for(const [a,b] of [['teh','the'],['لطفا','لطفاً'],['مشخسات','مشخصات']])assert.ok(r.findings.some(f=>f.original===a&&f.replacement===b),a);
+            assert.ok(r.findings.every(f=>f.start>=0&&f.end<=en.length+fa.length&&text.slice(f.start,f.end)===f.original));
+          } finally {await profile.dispose();}
+          assert.equal((await profile.analyze({text:'',snapshotId:'closed',regions:[]})).status,'blocked');
           JS
           mkdir -p "$GITHUB_WORKSPACE/release-artifacts"
-          cp procurement-writing-engine-0.1.0-alpha.7.tgz "$GITHUB_WORKSPACE/release-artifacts/"
+          cp procurement-writing-engine-0.1.0-alpha.8.tgz "$GITHUB_WORKSPACE/release-artifacts/"
       - name: Dependency inventory
         run: |
           mkdir -p release-artifacts
@@ -88,13 +94,34 @@ jobs:
           name: verified-distribution
           path: |
             release-artifacts/dependencies.cdx.json
-            release-artifacts/procurement-writing-engine-0.1.0-alpha.7.tgz
+            release-artifacts/procurement-writing-engine-0.1.0-alpha.8.tgz
           retention-days: 14
 
+  browser-compatibility:
+    name: Cross-browser / ${{ matrix.browser }}
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [webkit, firefox]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts --no-fund
+      - run: npx --no-install playwright-core install --with-deps ${{ matrix.browser }}
+      - run: npm run build:demo
+      - run: npm run test:browser
+        env:
+          PWE_BROWSER: ${{ matrix.browser }}
+
   release-alpha:
-    name: Publish verified GitHub alpha.7
-    needs: [contract, upstream-and-browser]
-    if: github.repository == 'FireXCore/procurement-writing-engine' && github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    name: Publish verified GitHub alpha.8
+    needs: [contract, upstream-and-browser, browser-compatibility]
+    if: github.repository == 'FireXCore/procurement-writing-engine' && github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -112,19 +139,19 @@ jobs:
           path: release-artifacts
       - name: Verify exact consumer-tested distribution
         run: |
-          test "$(node -p 'require("./package.json").version')" = "0.1.0-alpha.7"
+          test "$(node -p 'require("./package.json").version')" = "0.1.0-alpha.8"
           test "$(node -p 'require("./package.json").private')" = "false"
           npm run release:check
           cd release-artifacts
-          test -s procurement-writing-engine-0.1.0-alpha.7.tgz
+          test -s procurement-writing-engine-0.1.0-alpha.8.tgz
           test -s dependencies.cdx.json
-          sha256sum procurement-writing-engine-0.1.0-alpha.7.tgz dependencies.cdx.json > SHA256SUMS.txt
+          sha256sum procurement-writing-engine-0.1.0-alpha.8.tgz dependencies.cdx.json > SHA256SUMS.txt
       - name: Publish immutable prerelease once
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          tag=v0.1.0-alpha.7
+          tag=v0.1.0-alpha.8
           test "$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq .object.sha)" = "$GITHUB_SHA"
           if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             echo "Existing release retained; never overwrite."
@@ -136,4 +163,4 @@ jobs:
           else
             test "$?" -eq 2
           fi
-          gh release create "$tag" release-artifacts/procurement-writing-engine-0.1.0-alpha.7.tgz release-artifacts/SHA256SUMS.txt release-artifacts/dependencies.cdx.json --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease --title "Procurement Writing Engine $tag" --notes-file docs/RELEASE_NOTES.md
+          gh release create "$tag" release-artifacts/procurement-writing-engine-0.1.0-alpha.8.tgz release-artifacts/SHA256SUMS.txt release-artifacts/dependencies.cdx.json --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease --title "Procurement Writing Engine $tag" --notes-file docs/RELEASE_NOTES.md

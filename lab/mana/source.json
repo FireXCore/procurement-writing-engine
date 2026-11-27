@@ -1,0 +1,10 @@
+{
+  "repo": "MahtaFetrat/ManaTTS-Persian-Speech-Dataset",
+  "revision": "5ee92110143b01cdf46ee27e0df1cb7ebb39a7f0",
+  "path": "sample_data/metadata.csv",
+  "gitBlob": "a0b7730482ea30b614f3463bdb93c836e1e73102",
+  "bytes": 13291,
+  "license": "CC0-1.0",
+  "paper": "https://aclanthology.org/2025.naacl-long.464/",
+  "scope": "Official small sample only"
+}

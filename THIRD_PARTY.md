@@ -15,3 +15,5 @@ The integration code is independently authored. No upstream source trees, propri
 The official ASD-STE100 standard, its dictionary and related trademarks are separate from the checker repository's code license. Do not republish its vocabulary tables, claim certified conformance, or imply endorsement. The STE100 checker requires spaCy and an installed `en_core_web_sm` model; their licenses and distribution terms must be reviewed before deployment. No LLM is required by this integration, but a statistical language model is needed for that optional checker.
 
 Do not treat this list as a complete transitive software bill of materials or legal approval. Release requires exact dependency locks, vulnerability review, SBOM and third-party notice verification for the actual distributed artifact.
+
+The optional qualification demo derives standalone roots from `dictionary-fa@2.0.0` (Lilak, Apache-2.0). It is a dev dependency only; the SDK distribution does not bundle this lexicon. The demo includes the source notice and Apache license under `licenses/lilak.txt`. See `docs/INTEGRATED_PREVIEW.md`.

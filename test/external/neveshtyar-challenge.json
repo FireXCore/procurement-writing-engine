@@ -1,0 +1,494 @@
+{
+  "source": "https://github.com/FarsioIR/NeveshtYar/blob/main/docs/evidence/v4.9.0/m2b-s-top3-spelling-suggestions/untouched-top3-holdout.json",
+  "blob": "d02a23c509b6b84fef15fa288e173053c3e3713a",
+  "license": "MIT; original notice in NEVESHTYAR-LICENSE.txt",
+  "selection": "11 fixed and 60 published failure examples, not the original 6000-case holdout",
+  "cases": [
+    {
+      "language": "en",
+      "source": "tehcnology",
+      "target": "technology",
+      "subset": "fixed"
+    },
+    {
+      "language": "en",
+      "source": "recieve",
+      "target": "receive",
+      "subset": "fixed"
+    },
+    {
+      "language": "en",
+      "source": "adress",
+      "target": "address",
+      "subset": "fixed"
+    },
+    {
+      "language": "en",
+      "source": "pyhton",
+      "target": "python",
+      "subset": "fixed"
+    },
+    {
+      "language": "en",
+      "source": "javscript",
+      "target": "javascript",
+      "subset": "fixed"
+    },
+    {
+      "language": "en",
+      "source": "databse",
+      "target": "database",
+      "subset": "fixed"
+    },
+    {
+      "language": "fa",
+      "source": "دانشکاه",
+      "target": "دانشگاه",
+      "subset": "fixed"
+    },
+    {
+      "language": "fa",
+      "source": "برنانه",
+      "target": "برنامه",
+      "subset": "fixed"
+    },
+    {
+      "language": "fa",
+      "source": "اینترننت",
+      "target": "اینترنت",
+      "subset": "fixed"
+    },
+    {
+      "language": "fa",
+      "source": "مرورگرر",
+      "target": "مرورگر",
+      "subset": "fixed"
+    },
+    {
+      "language": "fa",
+      "source": "موسقی",
+      "target": "موسیقی",
+      "subset": "fixed"
+    },
+    {
+      "language": "en",
+      "source": "krat",
+      "target": "kraut",
+      "subset": "reported-hard",
+      "operation": "delete"
+    },
+    {
+      "language": "en",
+      "source": "waige",
+      "target": "paige",
+      "subset": "reported-hard",
+      "operation": "substitute"
+    },
+    {
+      "language": "en",
+      "source": "gace",
+      "target": "game",
+      "subset": "reported-hard",
+      "operation": "substitute"
+    },
+    {
+      "language": "en",
+      "source": "wegd",
+      "target": "weed",
+      "subset": "reported-hard",
+      "operation": "substitute"
+    },
+    {
+      "language": "en",
+      "source": "flate",
+      "target": "flute",
+      "subset": "reported-hard",
+      "operation": "substitute"
+    },
+    {
+      "language": "en",
+      "source": "daye",
+      "target": "dave",
+      "subset": "reported-hard",
+      "operation": "substitute"
+    },
+    {
+      "language": "en",
+      "source": "sise",
+      "target": "sine",
+      "subset": "reported-hard",
+      "operation": "substitute"
+    },
+    {
+      "language": "en",
+      "source": "sice",
+      "target": "sire",
+      "subset": "reported-hard",
+      "operation": "substitute"
+    },
+    {
+      "language": "en",
+      "source": "wese",
+      "target": "weve",
+      "subset": "reported-hard",
+      "operation": "substitute"
+    },
+    {
+      "language": "en",
+      "source": "rippe",
+      "target": "ripped",
+      "subset": "reported-hard",
+      "operation": "delete"
+    },
+    {
+      "language": "en",
+      "source": "cloe",
+      "target": "chloe",
+      "subset": "reported-hard",
+      "operation": "delete"
+    },
+    {
+      "language": "en",
+      "source": "baue",
+      "target": "base",
+      "subset": "reported-hard",
+      "operation": "substitute"
+    },
+    {
+      "language": "en",
+      "source": "atch",
+      "target": "match",
+      "subset": "reported-hard",
+      "operation": "delete"
+    },
+    {
+      "language": "en",
+      "source": "aren",
+      "target": "karen",
+      "subset": "reported-hard",
+      "operation": "delete"
+    },
+    {
+      "language": "en",
+      "source": "llan",
+      "target": "llano",
+      "subset": "reported-hard",
+      "operation": "delete"
+    },
+    {
+      "language": "en",
+      "source": "worty",
+      "target": "warty",
+      "subset": "reported-hard",
+      "operation": "substitute"
+    },
+    {
+      "language": "en",
+      "source": "taet",
+      "target": "taft",
+      "subset": "reported-hard",
+      "operation": "substitute"
+    },
+    {
+      "language": "en",
+      "source": "tarth",
+      "target": "tart",
+      "subset": "reported-hard",
+      "operation": "insert"
+    },
+    {
+      "language": "en",
+      "source": "hoyt",
+      "target": "holt",
+      "subset": "reported-hard",
+      "operation": "substitute"
+    },
+    {
+      "language": "en",
+      "source": "chil",
+      "target": "chili",
+      "subset": "reported-hard",
+      "operation": "delete"
+    },
+    {
+      "language": "en",
+      "source": "gavl",
+      "target": "gaul",
+      "subset": "reported-hard",
+      "operation": "substitute"
+    },
+    {
+      "language": "en",
+      "source": "hoae",
+      "target": "howe",
+      "subset": "reported-hard",
+      "operation": "substitute"
+    },
+    {
+      "language": "en",
+      "source": "houe",
+      "target": "hope",
+      "subset": "reported-hard",
+      "operation": "substitute"
+    },
+    {
+      "language": "en",
+      "source": "hoee",
+      "target": "hoke",
+      "subset": "reported-hard",
+      "operation": "substitute"
+    },
+    {
+      "language": "en",
+      "source": "loer",
+      "target": "lower",
+      "subset": "reported-hard",
+      "operation": "delete"
+    },
+    {
+      "language": "en",
+      "source": "hogd",
+      "target": "howd",
+      "subset": "reported-hard",
+      "operation": "substitute"
+    },
+    {
+      "language": "en",
+      "source": "hoat",
+      "target": "hoot",
+      "subset": "reported-hard",
+      "operation": "substitute"
+    },
+    {
+      "language": "en",
+      "source": "lico",
+      "target": "lido",
+      "subset": "reported-hard",
+      "operation": "substitute"
+    },
+    {
+      "language": "en",
+      "source": "hosey",
+      "target": "holey",
+      "subset": "reported-hard",
+      "operation": "substitute"
+    },
+    {
+      "language": "en",
+      "source": "doma",
+      "target": "dopa",
+      "subset": "reported-hard",
+      "operation": "substitute"
+    },
+    {
+      "language": "fa",
+      "source": "پویدی",
+      "target": "پوییدی",
+      "subset": "reported-hard",
+      "operation": "delete"
+    },
+    {
+      "language": "fa",
+      "source": "کاکاپو",
+      "target": "کاکائو",
+      "subset": "reported-hard",
+      "operation": "substitute"
+    },
+    {
+      "language": "fa",
+      "source": "میاییدند",
+      "target": "میچاییدند",
+      "subset": "reported-hard",
+      "operation": "delete"
+    },
+    {
+      "language": "fa",
+      "source": "حوای",
+      "target": "حوثی",
+      "subset": "reported-hard",
+      "operation": "substitute"
+    },
+    {
+      "language": "fa",
+      "source": "قنصری",
+      "target": "قنبری",
+      "subset": "reported-hard",
+      "operation": "substitute"
+    },
+    {
+      "language": "fa",
+      "source": "نزایاندو",
+      "target": "نزایاند",
+      "subset": "reported-hard",
+      "operation": "insert"
+    },
+    {
+      "language": "fa",
+      "source": "میپاییدژ",
+      "target": "میپایید",
+      "subset": "reported-hard",
+      "operation": "insert"
+    },
+    {
+      "language": "fa",
+      "source": "بیعتی",
+      "target": "بیعزتی",
+      "subset": "reported-hard",
+      "operation": "delete"
+    },
+    {
+      "language": "fa",
+      "source": "جندیدهاند",
+      "target": "گندیدهاند",
+      "subset": "reported-hard",
+      "operation": "substitute"
+    },
+    {
+      "language": "fa",
+      "source": "آریدی",
+      "target": "مریدی",
+      "subset": "reported-hard",
+      "operation": "substitute"
+    },
+    {
+      "language": "fa",
+      "source": "راکیی",
+      "target": "راکعی",
+      "subset": "reported-hard",
+      "operation": "substitute"
+    },
+    {
+      "language": "fa",
+      "source": "بگنجه",
+      "target": "بگنج",
+      "subset": "reported-hard",
+      "operation": "insert"
+    },
+    {
+      "language": "fa",
+      "source": "نچییم",
+      "target": "نچسیم",
+      "subset": "reported-hard",
+      "operation": "substitute"
+    },
+    {
+      "language": "fa",
+      "source": "سردای",
+      "target": "سردی",
+      "subset": "reported-hard",
+      "operation": "insert"
+    },
+    {
+      "language": "fa",
+      "source": "پیدن",
+      "target": "کپیدن",
+      "subset": "reported-hard",
+      "operation": "delete"
+    },
+    {
+      "language": "fa",
+      "source": "رصاندید",
+      "target": "رقصاندید",
+      "subset": "reported-hard",
+      "operation": "delete"
+    },
+    {
+      "language": "fa",
+      "source": "میرونیم",
+      "target": "میرویم",
+      "subset": "reported-hard",
+      "operation": "insert"
+    },
+    {
+      "language": "fa",
+      "source": "آودی",
+      "target": "آلودی",
+      "subset": "reported-hard",
+      "operation": "delete"
+    },
+    {
+      "language": "fa",
+      "source": "نمایدن",
+      "target": "نماید",
+      "subset": "reported-hard",
+      "operation": "insert"
+    },
+    {
+      "language": "fa",
+      "source": "میسیم",
+      "target": "لیسیم",
+      "subset": "reported-hard",
+      "operation": "substitute"
+    },
+    {
+      "language": "fa",
+      "source": "نسودز",
+      "target": "نسودی",
+      "subset": "reported-hard",
+      "operation": "substitute"
+    },
+    {
+      "language": "fa",
+      "source": "ناداب",
+      "target": "نادان",
+      "subset": "reported-hard",
+      "operation": "substitute"
+    },
+    {
+      "language": "fa",
+      "source": "میاییدهاند",
+      "target": "میگاییدهاند",
+      "subset": "reported-hard",
+      "operation": "delete"
+    },
+    {
+      "language": "fa",
+      "source": "خرین",
+      "target": "آخرین",
+      "subset": "reported-hard",
+      "operation": "delete"
+    },
+    {
+      "language": "fa",
+      "source": "میهرشتند",
+      "target": "میهشتند",
+      "subset": "reported-hard",
+      "operation": "insert"
+    },
+    {
+      "language": "fa",
+      "source": "میدشانی",
+      "target": "میچشانی",
+      "subset": "reported-hard",
+      "operation": "substitute"
+    },
+    {
+      "language": "fa",
+      "source": "پیشوان",
+      "target": "پیشوا",
+      "subset": "reported-hard",
+      "operation": "insert"
+    },
+    {
+      "language": "fa",
+      "source": "برنطد",
+      "target": "برنجد",
+      "subset": "reported-hard",
+      "operation": "substitute"
+    },
+    {
+      "language": "fa",
+      "source": "خمور",
+      "target": "خمیر",
+      "subset": "reported-hard",
+      "operation": "substitute"
+    },
+    {
+      "language": "fa",
+      "source": "جمقه",
+      "target": "جمله",
+      "subset": "reported-hard",
+      "operation": "substitute"
+    }
+  ]
+}

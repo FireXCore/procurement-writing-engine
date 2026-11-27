@@ -1,0 +1,336 @@
+{
+  "schema": 1,
+  "baseline": {
+    "cases": 10200,
+    "routed": 3080,
+    "entityProtected": 9000,
+    "joint": 1880,
+    "invalidPartitions": 0,
+    "unsafeProse": 0,
+    "lockedLeak": 0
+  },
+  "candidate": {
+    "cases": 10200,
+    "routed": 10200,
+    "entityProtected": 8700,
+    "joint": 8700,
+    "invalidPartitions": 0,
+    "unsafeProse": 0,
+    "lockedLeak": 0
+  },
+  "host": {
+    "cases": 10200,
+    "routed": 10200,
+    "entityProtected": 10200,
+    "joint": 10200,
+    "invalidPartitions": 0,
+    "unsafeProse": 0,
+    "lockedLeak": 0
+  },
+  "groups": {
+    "baseline": {
+      "language:en": {
+        "cases": 5100,
+        "routed": 1540,
+        "entityProtected": 4500,
+        "joint": 940,
+        "invalidPartitions": 0,
+        "unsafeProse": 0,
+        "lockedLeak": 0
+      },
+      "entity:brand": {
+        "cases": 1200,
+        "routed": 1200,
+        "entityProtected": 0,
+        "joint": 0,
+        "invalidPartitions": 0,
+        "unsafeProse": 0,
+        "lockedLeak": 0
+      },
+      "entity:model": {
+        "cases": 1200,
+        "routed": 330,
+        "entityProtected": 1200,
+        "joint": 330,
+        "invalidPartitions": 0,
+        "unsafeProse": 0,
+        "lockedLeak": 0
+      },
+      "entity:standard": {
+        "cases": 1200,
+        "routed": 380,
+        "entityProtected": 1200,
+        "joint": 380,
+        "invalidPartitions": 0,
+        "unsafeProse": 0,
+        "lockedLeak": 0
+      },
+      "entity:measurement": {
+        "cases": 2400,
+        "routed": 650,
+        "entityProtected": 2400,
+        "joint": 650,
+        "invalidPartitions": 0,
+        "unsafeProse": 0,
+        "lockedLeak": 0
+      },
+      "entity:financial": {
+        "cases": 1200,
+        "routed": 0,
+        "entityProtected": 1200,
+        "joint": 0,
+        "invalidPartitions": 0,
+        "unsafeProse": 0,
+        "lockedLeak": 0
+      },
+      "entity:commercial": {
+        "cases": 1200,
+        "routed": 0,
+        "entityProtected": 1200,
+        "joint": 0,
+        "invalidPartitions": 0,
+        "unsafeProse": 0,
+        "lockedLeak": 0
+      },
+      "entity:date": {
+        "cases": 600,
+        "routed": 0,
+        "entityProtected": 600,
+        "joint": 0,
+        "invalidPartitions": 0,
+        "unsafeProse": 0,
+        "lockedLeak": 0
+      },
+      "entity:contact": {
+        "cases": 600,
+        "routed": 350,
+        "entityProtected": 600,
+        "joint": 350,
+        "invalidPartitions": 0,
+        "unsafeProse": 0,
+        "lockedLeak": 0
+      },
+      "entity:path": {
+        "cases": 600,
+        "routed": 170,
+        "entityProtected": 600,
+        "joint": 170,
+        "invalidPartitions": 0,
+        "unsafeProse": 0,
+        "lockedLeak": 0
+      },
+      "language:fa": {
+        "cases": 5100,
+        "routed": 1540,
+        "entityProtected": 4500,
+        "joint": 940,
+        "invalidPartitions": 0,
+        "unsafeProse": 0,
+        "lockedLeak": 0
+      }
+    },
+    "candidate": {
+      "language:en": {
+        "cases": 5100,
+        "routed": 5100,
+        "entityProtected": 4350,
+        "joint": 4350,
+        "invalidPartitions": 0,
+        "unsafeProse": 0,
+        "lockedLeak": 0
+      },
+      "entity:brand": {
+        "cases": 1200,
+        "routed": 1200,
+        "entityProtected": 0,
+        "joint": 0,
+        "invalidPartitions": 0,
+        "unsafeProse": 0,
+        "lockedLeak": 0
+      },
+      "entity:model": {
+        "cases": 1200,
+        "routed": 1200,
+        "entityProtected": 1200,
+        "joint": 1200,
+        "invalidPartitions": 0,
+        "unsafeProse": 0,
+        "lockedLeak": 0
+      },
+      "entity:standard": {
+        "cases": 1200,
+        "routed": 1200,
+        "entityProtected": 1200,
+        "joint": 1200,
+        "invalidPartitions": 0,
+        "unsafeProse": 0,
+        "lockedLeak": 0
+      },
+      "entity:measurement": {
+        "cases": 2400,
+        "routed": 2400,
+        "entityProtected": 2400,
+        "joint": 2400,
+        "invalidPartitions": 0,
+        "unsafeProse": 0,
+        "lockedLeak": 0
+      },
+      "entity:financial": {
+        "cases": 1200,
+        "routed": 1200,
+        "entityProtected": 1200,
+        "joint": 1200,
+        "invalidPartitions": 0,
+        "unsafeProse": 0,
+        "lockedLeak": 0
+      },
+      "entity:commercial": {
+        "cases": 1200,
+        "routed": 1200,
+        "entityProtected": 900,
+        "joint": 900,
+        "invalidPartitions": 0,
+        "unsafeProse": 0,
+        "lockedLeak": 0
+      },
+      "entity:date": {
+        "cases": 600,
+        "routed": 600,
+        "entityProtected": 600,
+        "joint": 600,
+        "invalidPartitions": 0,
+        "unsafeProse": 0,
+        "lockedLeak": 0
+      },
+      "entity:contact": {
+        "cases": 600,
+        "routed": 600,
+        "entityProtected": 600,
+        "joint": 600,
+        "invalidPartitions": 0,
+        "unsafeProse": 0,
+        "lockedLeak": 0
+      },
+      "entity:path": {
+        "cases": 600,
+        "routed": 600,
+        "entityProtected": 600,
+        "joint": 600,
+        "invalidPartitions": 0,
+        "unsafeProse": 0,
+        "lockedLeak": 0
+      },
+      "language:fa": {
+        "cases": 5100,
+        "routed": 5100,
+        "entityProtected": 4350,
+        "joint": 4350,
+        "invalidPartitions": 0,
+        "unsafeProse": 0,
+        "lockedLeak": 0
+      }
+    },
+    "host": {
+      "language:en": {
+        "cases": 5100,
+        "routed": 5100,
+        "entityProtected": 5100,
+        "joint": 5100,
+        "invalidPartitions": 0,
+        "unsafeProse": 0,
+        "lockedLeak": 0
+      },
+      "entity:brand": {
+        "cases": 1200,
+        "routed": 1200,
+        "entityProtected": 1200,
+        "joint": 1200,
+        "invalidPartitions": 0,
+        "unsafeProse": 0,
+        "lockedLeak": 0
+      },
+      "entity:model": {
+        "cases": 1200,
+        "routed": 1200,
+        "entityProtected": 1200,
+        "joint": 1200,
+        "invalidPartitions": 0,
+        "unsafeProse": 0,
+        "lockedLeak": 0
+      },
+      "entity:standard": {
+        "cases": 1200,
+        "routed": 1200,
+        "entityProtected": 1200,
+        "joint": 1200,
+        "invalidPartitions": 0,
+        "unsafeProse": 0,
+        "lockedLeak": 0
+      },
+      "entity:measurement": {
+        "cases": 2400,
+        "routed": 2400,
+        "entityProtected": 2400,
+        "joint": 2400,
+        "invalidPartitions": 0,
+        "unsafeProse": 0,
+        "lockedLeak": 0
+      },
+      "entity:financial": {
+        "cases": 1200,
+        "routed": 1200,
+        "entityProtected": 1200,
+        "joint": 1200,
+        "invalidPartitions": 0,
+        "unsafeProse": 0,
+        "lockedLeak": 0
+      },
+      "entity:commercial": {
+        "cases": 1200,
+        "routed": 1200,
+        "entityProtected": 1200,
+        "joint": 1200,
+        "invalidPartitions": 0,
+        "unsafeProse": 0,
+        "lockedLeak": 0
+      },
+      "entity:date": {
+        "cases": 600,
+        "routed": 600,
+        "entityProtected": 600,
+        "joint": 600,
+        "invalidPartitions": 0,
+        "unsafeProse": 0,
+        "lockedLeak": 0
+      },
+      "entity:contact": {
+        "cases": 600,
+        "routed": 600,
+        "entityProtected": 600,
+        "joint": 600,
+        "invalidPartitions": 0,
+        "unsafeProse": 0,
+        "lockedLeak": 0
+      },
+      "entity:path": {
+        "cases": 600,
+        "routed": 600,
+        "entityProtected": 600,
+        "joint": 600,
+        "invalidPartitions": 0,
+        "unsafeProse": 0,
+        "lockedLeak": 0
+      },
+      "language:fa": {
+        "cases": 5100,
+        "routed": 5100,
+        "entityProtected": 5100,
+        "joint": 5100,
+        "invalidPartitions": 0,
+        "unsafeProse": 0,
+        "lockedLeak": 0
+      }
+    }
+  },
+  "limitations": "Synthetic development set; not holdout, not spelling quality, host literals disclosed. Executed in isolated JavaScript against fetched Alpha 7 core. CLI and CI pending."
+}

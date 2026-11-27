@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.0-alpha.8 — release candidate (unpublished)
+
+- Expose managed offline bilingual review composition and optional host-supplied Lilak dictionary preparation.
+- Preserve exact source-only dictionary evidence, bounded contextual ranking, opt-in adaptive preferences and review-only behavior.
+- Harden explicit literal isolation, protect original spans and retain formal Persian and narrow English policy regressions.
+- Qualify Chromium, Firefox, WebKit and clean installed SDK; freeze runtime dependencies.
+- Defer unqualified external spelling cascades and full-corpus statistical evidence. No corpus, new model or automatic correction is bundled.
+
 ## 0.1.0-alpha.7 — bilingual review coverage
 
 - Isolate bounded contact details, URLs, Windows paths, engineering standards, measurements and structured identifiers in the synthetic browser demo; unknown ranges remain fail-closed.

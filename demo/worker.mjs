@@ -1,16 +1,31 @@
-import { createEngine, createHarper, createVirastar, createTextlint, procurementPolicyRules } from '../src/index.mjs';
+import { createEngine, createHarper, createVirastar, createTextlint, procurementPolicyRules, createLilakProvider } from '../src/index.mjs';
 self.onmessage=async({data})=>{
-  let harper;
+  let harper,stage='setup',dictionaryUsed=false,dictionaryError=false;
+  function progress(next){stage=next;self.postMessage({type:'progress',stage});}
   try{
     const providers=[], languages=new Set(data.document.regions.filter(r=>r.kind==='prose').map(r=>r.language));
     if(languages.has('en')){
+      progress('english-setup');
       const {binaryInlined}=await import('harper.js/binaryInlined');
       harper=await createHarper({binary:binaryInlined,worker:false});
       providers.push(harper.provider,await createTextlint(procurementPolicyRules));
     }
-    if(languages.has('fa'))providers.push(await createVirastar());
+    if(languages.has('fa')){
+      progress('persian-setup');
+      providers.push(await createVirastar());
+      if(data.lexicon===true){
+        try{
+          progress('dictionary-load');
+          const {default:packed}=await import('virtual:pwe-persian-roots');
+          progress('dictionary-init');
+          providers.push(createLilakProvider(packed));
+          dictionaryUsed=true;
+        }catch{dictionaryError=true;}
+      }
+    }
+    progress('review');
     const report=await createEngine(providers).analyze(data.document);
-    self.postMessage({ok:true,report});
-  }catch{self.postMessage({ok:false});}
+    self.postMessage({type:'result',ok:true,report,dictionaryUsed,dictionaryError});
+  }catch{self.postMessage({type:'result',ok:false,stage});}
   finally{await harper?.dispose().catch(()=>{});}
 };

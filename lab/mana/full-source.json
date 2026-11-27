@@ -1,0 +1,16 @@
+{
+  "dataset": "MahtaFetrat/Mana-TTS",
+  "revision": "698f7f7bfe7a8fc665e9c4c0ca9eea7e0d49f64f",
+  "directory": "dataset",
+  "columns": [
+    "file name",
+    "transcript",
+    "match quality"
+  ],
+  "license": "CC0-1.0",
+  "paper": "https://aclanthology.org/2025.naacl-long.464/",
+  "maxTransferBytes": 134217728,
+  "maxReadBytes": 2097152,
+  "maxRows": 100000,
+  "scope": "All enumerated original Parquet shards at pinned commit; text column projection only"
+}
