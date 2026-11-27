@@ -35,7 +35,7 @@ def safe_response(response):
         raise ValueError("Unsafe response URL")
 
 def get_inventory():
-    url = f"{BASE}/api/datasets/{MANIFEST['dataset']}/tree/{MANIFEST['revision']}/{MANIFEST['directory']}?recursive=false&expand=true&limit=100"
+    url = f"{BASE}/api/datasets/{MANIFEST['dataset']}/tree/{MANIFEST['revision']}/{MANIFEST['directory']}?recursive=false&limit=100"
     with urlopen(Request(url, headers={"Accept": "application/json"}), timeout=45) as r:
         safe_response(r)
         if r.status != 200 or r.headers.get("Link") and 'rel="next"' in r.headers["Link"]:

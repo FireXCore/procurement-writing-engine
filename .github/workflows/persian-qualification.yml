@@ -48,7 +48,8 @@ jobs:
         with:
           python-version: '3.12'
       - name: Install isolated Parquet reader
-        run: python -m pip install --only-binary=:all: --no-deps pyarrow==22.0.0
+        run: |
+          python -m pip install --only-binary=:all: --no-deps pyarrow==22.0.0
       - name: Test exact-range reader
         run: python -m unittest discover -s lab/mana -p 'test_project_text.py'
       - name: Project full pinned corpus (strict 128 MiB range budget)
