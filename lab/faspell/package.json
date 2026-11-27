@@ -1,0 +1,9 @@
+{
+  "name": "pwe-faspell-qualification",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "nspell": "2.1.5",
+    "is-buffer": "2.0.5"
+  }
+}
