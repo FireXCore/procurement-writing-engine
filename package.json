@@ -92,7 +92,7 @@
     "@textlint/textlint-plugin-text": "16.1.3",
     "dictionary-fa": "2.0.0",
     "harper.js": "3.2.0",
-    "playwright-core": "1.58.2",
+    "playwright-core": "1.65.1",
     "typescript": "5.9.3",
     "virastar": "0.22.1",
     "vite": "8.3.8"
