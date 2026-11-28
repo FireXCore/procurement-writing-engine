@@ -5,7 +5,12 @@ import {createEngine,createHarper,createVirastar,createTextlint,procurementPolic
 // Public build: fixed local benchmark only. No external imports or model fetches.
 let started=false;
 const report=(type,data={})=>self.postMessage({type,...data});
-self.onmessage=async({data})=>{
+self.onmessage=async(event)=>{
+  // Dedicated workers receive trusted parent messages with an empty origin.
+  // If a browser supplies an origin, it must match this worker's origin.
+  if(event.origin!==''&&event.origin!==self.location.origin)return;
+  if(event.isTrusted!==true||event.source!==null)return;
+  const {data}=event;
   if(started)return;started=true;
   let harper;
   try{

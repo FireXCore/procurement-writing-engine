@@ -5,6 +5,7 @@ import {createEngine} from '../src/engine.mjs';
 import {createAdaptiveReview} from '../src/adaptive-review.mjs';
 import {protectEntitySpans} from '../src/protection.mjs';
 import {readFileSync} from 'node:fs';
+import {runInNewContext} from 'node:vm';
 const doc=(text,language='en')=>({text,snapshotId:'security-fixture',regions:[{start:0,end:text.length,kind:'prose',language}]});
 const provider=(check)=>({id:'fixture',languages:['en','fa'],check});
 const finding=(text,replacement)=>({start:0,end:text.length,original:text,replacement,category:'spelling',rule:'fixture',message:'Review candidate.'});
@@ -71,4 +72,24 @@ test('adversarial edits cannot consume a separator at protected region edges',as
  const document={text:'Acme teh',regions:cases[0].regions,snapshotId:'edge-ok'};
  const r=await createEngine([provider(()=>[{...finding('teh','the'),start:1,end:4}])]).analyze(document);
  assert.equal(r.status,'complete');assert.equal(r.findings[0].replacement,'the');
+});
+
+
+test('dedicated worker handlers reject foreign, synthetic and non-parent messages before processing',async()=>{
+  for(const name of ['worker.mjs','neural-lab-worker.mjs']){
+    const sent=[];
+    const self={location:{origin:'https://demo.example'},postMessage:value=>sent.push(value)};
+    const source=readFileSync(new URL('../demo/'+name,import.meta.url),'utf8').replace(/^import .*;\r?$/gmu,'');
+    runInNewContext(source,{self});
+    const event={origin:'',isTrusted:true,source:null,data:null};
+    await self.onmessage({...event,origin:'https://foreign.example'});
+    await self.onmessage({...event,isTrusted:false});
+    await self.onmessage({...event,source:{}});
+    assert.equal(sent.length,0,name);
+    await self.onmessage(event);
+    assert.equal(sent.length,1,name);
+    assert.ok(sent[0].type==='error'||sent[0].ok===false,name);
+    await self.onmessage(event);
+    assert.equal(sent.length,1,name+' must accept only one request');
+  }
 });

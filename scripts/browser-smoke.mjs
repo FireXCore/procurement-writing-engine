@@ -1,7 +1,7 @@
 import { chromium,webkit,firefox } from 'playwright-core';
 import { createServer } from 'node:http';
-import { readFile,stat } from 'node:fs/promises';
-import { existsSync } from 'node:fs';
+import { readFile,open } from 'node:fs/promises';
+import { existsSync,constants } from 'node:fs';
 import { resolve,sep,extname } from 'node:path';
 import assert from 'node:assert/strict';
 import {cases,locked,extendedCases,alpha7Cases} from '../test/acceptance-fixtures.mjs';
@@ -13,7 +13,21 @@ const browserType={chromium,webkit,firefox}[browserName];
 assert.ok(browserType,'Unsupported PWE_BROWSER');
 if(browserName==='chromium')assert.ok(executablePath,'Install Chromium/Chrome or set PWE_CHROME. No browser is downloaded silently.');
 const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.wasm':'application/wasm','.svg':'image/svg+xml','.png':'image/png'};
-const server=createServer(async(req,res)=>{try{const url=new URL(req.url,'http://127.0.0.1');const path=resolve(root,'.'+(url.pathname==='/'?'/index.html':decodeURIComponent(url.pathname)));if(!path.startsWith(root+sep)||!(await stat(path)).isFile())throw Error();res.writeHead(200,{'Content-Type':mime[extname(path)]??'application/octet-stream','Cache-Control':'no-store'});res.end(await readFile(path));}catch{res.writeHead(404);res.end();}});
+const server=createServer(async(req,res)=>{
+  let file;
+  try{
+    const url=new URL(req.url,'http://127.0.0.1');
+    const path=resolve(root,'.'+(url.pathname==='/'?'/index.html':decodeURIComponent(url.pathname)));
+    if(!path.startsWith(root+sep))throw Error('Outside build root');
+    // Inspect and read the same opened descriptor; never stat then reopen a path.
+    file=await open(path,constants.O_RDONLY|(constants.O_NOFOLLOW??0)|(constants.O_NONBLOCK??0));
+    if(!(await file.stat()).isFile())throw Error('Not a regular file');
+    const body=await file.readFile();
+    res.writeHead(200,{'Content-Type':mime[extname(path)]??'application/octet-stream','Cache-Control':'no-store'});
+    res.end(body);
+  }catch{if(!res.headersSent)res.writeHead(404);res.end();}
+  finally{if(file)await file.close().catch(()=>{});}
+});
 await new Promise((ok,fail)=>{server.once('error',fail);server.listen(0,'127.0.0.1',ok);});
 let browser;
 try{

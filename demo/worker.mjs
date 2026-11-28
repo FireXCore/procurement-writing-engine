@@ -1,5 +1,12 @@
 import { createEngine, createHarper, createVirastar, createTextlint, procurementPolicyRules, createLilakProvider } from '../src/index.mjs';
-self.onmessage=async({data})=>{
+let started=false;
+self.onmessage=async(event)=>{
+  // Dedicated workers receive trusted parent messages with an empty origin.
+  // If a browser supplies an origin, it must match this worker's origin.
+  if(event.origin!==''&&event.origin!==self.location.origin)return;
+  if(event.isTrusted!==true||event.source!==null)return;
+  const {data}=event;
+  if(started)return;started=true;
   let harper,stage='setup',dictionaryUsed=false,dictionaryError=false;
   function progress(next){stage=next;self.postMessage({type:'progress',stage});}
   try{
