@@ -5,6 +5,23 @@ const dangerous = /[<>@#=\/\\|_%$€£¥]/u;
 const latin = /\p{Script=Latin}/u;
 const arabic = /\p{Script=Arabic}/u;
 const zwnj = /\u200c/g;
+// Reject foreign-script letters and marks even within supported prose.
+const letterOrMark = /[\p{L}\p{M}]/u;
+const inheritedMark = /\p{M}/u;
+const inherited = /\p{Script=Inherited}/u;
+const supportedLetters = Object.freeze({
+  en: /\p{Script_Extensions=Latin}/u,
+  fa: /\p{Script_Extensions=Arabic}/u
+});
+function supportedScript(text, language) {
+  if (!Object.hasOwn(supportedLetters, language)) return false;
+  const script = supportedLetters[language];
+  for (const ch of text) {
+    if (letterOrMark.test(ch) && !script.test(ch) &&
+        !(inheritedMark.test(ch) && inherited.test(ch))) return false;
+  }
+  return true;
+}
 export const LIMITS = Object.freeze({ text: 16000, regions: 256, region: 2000, providers: 8, findings: 200, edits: 256, message: 400, providerFindings: 100, calls: 64, elapsedMs: 30000, providerMs: 15000 });
 
 export function boundaries(text) {
@@ -34,7 +51,7 @@ export function eligible(text, language) {
   const flat = text.replace(zwnj, '');
   if (!text.trim() || technical.test(flat.replace(/[\r\n\t]/g, '')) || dangerous.test(flat) ||
       /[\p{L}][\p{L}\p{M}]*[-‐‑–—][\p{L}]/u.test(flat) || /\b[A-Z]{2,}\b/.test(flat)) return false;
-  return language === 'en' ? latin.test(flat) && !arabic.test(flat) : arabic.test(flat) && !latin.test(flat);
+  return supportedScript(flat, language) && (language === 'en' ? latin.test(flat) && !arabic.test(flat) : arabic.test(flat) && !latin.test(flat));
 }
 
 export function validRange(text, start, end, b = boundaries(text)) {
@@ -52,7 +69,7 @@ export function validReplacement(original, replacement, language) {
     const clean = t.replace(zwnj, '');
     if (badControl.test(clean) || /\p{N}/u.test(clean) || dangerous.test(clean) ||
         /\b[A-Z]{2,}\b/.test(clean) || /[\p{L}][\p{L}\p{M}]*[-‐‑–—][\p{L}]/u.test(clean)) return false;
-    if (language === 'fa' ? latin.test(clean) : arabic.test(clean)) return false;
+    if (!supportedScript(clean, language) || (language === 'fa' ? latin.test(clean) : arabic.test(clean))) return false;
   }
   return true;
 }

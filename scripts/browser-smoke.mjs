@@ -31,9 +31,9 @@ try{
   assert.equal(await page.locator('#neural-baseline').isEnabled(),true);
   assert.equal(await page.locator('#neural-consent').isChecked(),false);
   assert.match(await page.locator('#neural-status').innerText(),/Not started/);
-  await page.locator('#neural-consent').check();
-  assert.equal(await page.locator('#neural-start').isEnabled(),true);
-  await page.locator('#neural-consent').uncheck();
+  assert.equal(await page.locator('#neural-consent').isDisabled(),true);
+  // Even DOM tampering cannot enable the remote execution path.
+  await page.evaluate(()=>{const c=document.querySelector('#neural-consent');c.disabled=false;c.checked=true;c.dispatchEvent(new Event('change'));});
   assert.equal(await page.locator('#neural-start').isDisabled(),true);
   assert.deepEqual(external,[],'No external requests before explicit start');
   await page.locator('#neural-baseline').click();
@@ -134,26 +134,21 @@ try{
   assert.ok((await page.locator('#findings .finding-pair').allTextContents()).includes('لطفا → لطفاً'));
   assert.equal(await page.locator('#prose').inputValue(),'لطفا مجددا ارسال کنید.');
   await page.reload();
-  // Persistence requires explicit opt-in and a genuine vote.
+  // Legacy profile must be deleted without loading it; new votes stay in memory.
+  await page.evaluate(()=>localStorage.setItem('pwe:synthetic-demo:preferences:v1','legacy-sensitive-fixture'));
+  await page.reload();
+  assert.equal(await page.evaluate(()=>localStorage.getItem('pwe:synthetic-demo:preferences:v1')),null);
   await page.locator('#learning-options summary').click();
   await page.locator('#learn-local').check();
-  await page.locator('#remember-local').check();
+  assert.equal(await page.locator('#remember-local').isDisabled(),true);
   await page.locator('#prose').fill('Please chek the quotation.');
   await page.locator('#run').click();
   await page.waitForFunction(()=>document.documentElement.dataset.review==='complete',{},{timeout:90000});
   await page.locator('#findings li').first().getByRole('button',{name:'Prefer next time'}).first().click();
-  const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('pwe:synthetic-demo:preferences:v1')));
-  assert.equal(saved.records.length,1);
+  assert.equal(await page.evaluate(()=>localStorage.getItem('pwe:synthetic-demo:preferences:v1')),null);
   await page.reload();
   assert.equal(await page.locator('#learn-local').isChecked(),false);
-  await page.locator('#learning-options summary').click();
-  await page.locator('#learn-local').check();
-  await page.locator('#remember-local').check();
-  assert.match(await page.locator('#learn-status').innerText(),/Saved preferences loaded/);
-  await page.locator('#forget-local').click();
   assert.equal(await page.evaluate(()=>localStorage.getItem('pwe:synthetic-demo:preferences:v1')),null);
-  await page.locator('#learn-local').uncheck();
-  await page.locator('#learning-options summary').click();
   // Preserve the existing legacy comparator suite with an explicit switch.
   await page.locator('#routing-options summary').click();
   await page.locator('#routing-v2').uncheck();

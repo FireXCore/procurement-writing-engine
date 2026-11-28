@@ -1,5 +1,7 @@
 import { LIMITS, validateDocument, eligible, boundaries, validRange, validReplacement } from './regions.mjs';
 
+import { preservesCriticalMeaning } from './critical-meaning.mjs';
+
 const providerId = /^[a-z][a-z0-9-]{0,47}$/;
 const ruleId = /^[a-zA-Z0-9_.:/-]{1,100}$/;
 const categories = new Set(['spelling','grammar','orthography','terminology','style','technical-writing']);
@@ -86,7 +88,8 @@ export function createEngine(providers) {
             }
             // Inserts on a protected-region boundary are rejected; do not guess where they belong.
             if (f.start === f.end && (f.start === 0 || f.start === source.length)) { partial = true; rejected = true; continue; }
-            if (f.replacement !== undefined && !validReplacement(f.original,f.replacement,region.language)) { partial = true; rejected = true; continue; }
+            if (f.replacement !== undefined && (!validReplacement(f.original,f.replacement,region.language) ||
+                !preservesCriticalMeaning(source,f.start,f.end,f.replacement,region.language))) { partial = true; rejected = true; continue; }
             const start = region.start + f.start, end = region.start + f.end;
             const key = JSON.stringify([p.id,f.rule,start,end,f.replacement ?? null]);
             if (seen.has(key)) continue;

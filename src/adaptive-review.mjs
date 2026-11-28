@@ -1,5 +1,7 @@
 import {LIMITS,validateDocument,eligible,validRange,validReplacement,boundaries} from './regions.mjs';
 
+import {preservesCriticalMeaning} from './critical-meaning.mjs';
+
 const MAX_RECORDS=512, MAX_VOTES=32;
 const token=/^[\p{L}\p{M}]+(?:\u200c[\p{L}\p{M}]+)*$/u;
 const provider=/^[a-z][a-z0-9-]{0,47}$/u, rule=/^[a-zA-Z0-9_.:/-]{1,100}$/u;
@@ -9,7 +11,7 @@ const plain=x=>typeof x==='string'&&x.length>0&&x.length<=LIMITS.message&&!/[<>\
 const word=x=>typeof x==='string'&&x.length<=48&&x.isWellFormed()&&token.test(x);
 function learnable(language,f){
   return ['en','fa'].includes(language)&&f.category==='spelling'&&word(f.original)&&word(f.replacement)&&
-    eligible(f.original,language)&&validReplacement(f.original,f.replacement,language);
+    eligible(f.original,language)&&validReplacement(f.original,f.replacement,language)&&preservesCriticalMeaning(f.original,0,f.original.length,f.replacement,language);
 }
 const keyOf=(language,f)=>JSON.stringify([language,f.original,f.replacement]);
 function load(profile){
@@ -45,7 +47,8 @@ export function createAdaptiveReview({profile}={}){
       const region=document.regions.find(r=>r.kind==='prose'&&f.start>=r.start&&f.end<=r.end&&
         (f.start!==f.end||f.start>r.start&&f.end<r.end));
       if(!region||!eligible(document.text.slice(region.start,region.end),region.language)||
-        (f.replacement===undefined?f.start===f.end:!validReplacement(f.original,f.replacement,region.language)))throw new TypeError('Finding outside authorized prose');
+        (f.replacement===undefined?f.start===f.end:(!validReplacement(f.original,f.replacement,region.language)||
+          !preservesCriticalMeaning(document.text.slice(region.start,region.end),f.start-region.start,f.end-region.start,f.replacement,region.language))))throw new TypeError('Finding outside authorized prose');
       // Exact-span fusion only. Never discard competing overlapping ranges.
       // Advisory messages remain separate, including provider provenance.
       const groupKey=JSON.stringify([f.start,f.end,f.category,f.replacement===undefined?f.provider:null,f.replacement===undefined?f.rule:null]);

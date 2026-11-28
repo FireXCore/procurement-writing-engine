@@ -15,16 +15,27 @@ function runJson(executable,args,{stdin,signal,accepted=[0]}={}) {
       if (process.env[key] !== undefined) env[key] = process.env[key];
     }
     const child=spawn(executable,args,{shell:false,windowsHide:true,stdio:['pipe','pipe','ignore'],env});
-    let settled=false, bytes=0; const chunks=[];
+    let settled=false, terminating=false, bytes=0, cleanupTimer; const chunks=[];
     const timer=setTimeout(()=>fail('Process timeout'),TIMEOUT);
     const abort=()=>fail('Cancelled');
-    function cleanup(){clearTimeout(timer);signal?.removeEventListener('abort',abort);}
-    function fail(reason){if(settled)return;settled=true;cleanup();child.kill();reject(new Error(reason));}
+    function cleanup(){clearTimeout(timer);clearTimeout(cleanupTimer);signal?.removeEventListener('abort',abort);}
+    function fail(reason){
+      if(settled||terminating)return;
+      terminating=true;clearTimeout(timer);signal?.removeEventListener('abort',abort);
+      const finish=()=>{if(settled)return;settled=true;cleanup();reject(new Error(reason));};
+      // Wait for direct child exit where possible; inherited pipes or OS errors
+      // must not prevent a bounded return. This is not a process-tree sandbox.
+      child.once('exit',finish);child.once('close',finish);
+      cleanupTimer=setTimeout(finish,2000);
+      child.stdin.destroy();child.stdout.destroy();
+      try{child.kill('SIGKILL');}catch{}
+      if(child.exitCode!==null||child.signalCode!==null||!child.pid)finish();
+    }
     signal?.addEventListener('abort',abort,{once:true});
-    child.stdout.on('data',chunk=>{bytes+=chunk.length;if(bytes>MAX_RESPONSE)fail('Output limit');else if(!settled)chunks.push(chunk);});
+    child.stdout.on('data',chunk=>{bytes+=chunk.length;if(bytes>MAX_RESPONSE)fail('Output limit');else if(!settled&&!terminating)chunks.push(chunk);});
     child.on('error',()=>fail('Process unavailable'));
     child.stdin.on('error',()=>fail('Input failed'));
-    child.on('close',code=>{if(settled)return;if(!accepted.includes(code)){fail('Process failed');return;}settled=true;cleanup();try{resolve(JSON.parse(Buffer.concat(chunks).toString('utf8')));}catch{reject(new Error('Invalid JSON'));}});
+    child.on('close',code=>{if(settled||terminating)return;if(!accepted.includes(code)){fail('Process failed');return;}settled=true;cleanup();try{resolve(JSON.parse(Buffer.concat(chunks).toString('utf8')));}catch{reject(new Error('Invalid JSON'));}});
     child.stdin.end(stdin??'');
     if(signal?.aborted)abort();
   });
