@@ -11,7 +11,7 @@ self.onmessage=async({data})=>{
   try{
     if(!data||data.protocol!=='baseline')throw new Error('Remote runtime disabled');
     // Measure the existing lightweight reviewer independently on identical inputs.
-    stage='baseline';report('progress',{message:'Running lightweight baseline…'});
+    report('progress',{message:'Running lightweight baseline…'});
     let baseline={matched:0,missing:0,unexpected:0,blocked:0};
     try{
       const {binaryInlined}=await import('harper.js/binaryInlined');
