@@ -12,3 +12,12 @@ Status: development candidate, not approved for production. The library has no m
 * Render findings as escaped plain text, never HTML. Diagnostics exclude exception messages; findings contain excerpts of authorized prose and must not be logged by applications. Do not store source text in browser storage or analytics.
 
 Report vulnerabilities privately to the repository maintainer. Release and integration are blocked on the qualification checklist in `docs/RELEASE.md`.
+
+## Security hardening candidate (not a release)
+- Supported-script letters/marks are enforced for prose and replacements; protected data must still be declared by the authorized host. Common punctuation and emoji remain valid. Confusables within a supported script and plain-letter entity recognition are not solved by script validation.
+- Core and adaptive review reject changes to a conservative list of critical commercial terms. This lexical check does not prove semantic equivalence. Findings are review-only; RMS must verify authoritative record, tenant, session, permission, exact source and region map before displaying or allowing any application.
+- Public demo neural remote runtime is disabled at both UI and worker entry; the local fixed-corpus benchmark remains. Public demo preference learning is in-memory only; legacy origin-wide saved profiles are deleted without loading. Host-owned export/import remains available and requires explicit user/tenant scoping.
+- Node adapters attempt hard termination and bounded cleanup on failure. OS process-tree sandbox, executable trust, Windows ACLs, crash cleanup and service logging remain deployment-owned gates. Do not import Node or model adapters into RMS browser integration.
+- GitHub Actions references are pinned to full commit hashes; credentials are not persisted on checkout. This is hardening, not an upstream dependency audit. No automatic publication is authorized. Current release remains unchanged until a new independently qualified version is approved.
+
+Alpha 9 release additionally rejects default-ignorable characters (except Persian ZWNJ), guards edits touching protected region edges, independently queries OSV for exact root and clean-consumer dependency versions, and requires successful CodeQL security-extended analysis. This is not a complete proof of security or equivalent meaning. Unavailable scans, findings or missing reports block release; exact version and digest must match the verified artifact. No private advisory is disclosed by CI.

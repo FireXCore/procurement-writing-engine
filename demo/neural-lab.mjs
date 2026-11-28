@@ -4,13 +4,13 @@ const start=el('neural-start'),stop=el('neural-stop'),status=el('neural-status')
 let worker=null,timer=null,revision=0;
 function finish(message){
   revision++;worker?.terminate();worker=null;clearTimeout(timer);timer=null;
-  start.disabled=!consent.checked;stop.disabled=true;model.disabled=false;device.disabled=false;protocol.disabled=false;baseline.disabled=false;consent.disabled=false;status.textContent=message;
+  start.disabled=true;stop.disabled=true;model.disabled=false;device.disabled=false;protocol.disabled=false;baseline.disabled=false;consent.disabled=true;status.textContent=message;
 }
-consent.checked=false;start.disabled=true;
-consent.onchange=()=>{start.disabled=!consent.checked||!!worker;};
+consent.checked=false;consent.disabled=true;start.disabled=true;
+consent.onchange=()=>{consent.checked=false;start.disabled=true;};
 stop.onclick=()=>finish('Cancelled. The experimental worker was terminated.');
 function launch(baselineOnly=false){
-  if(worker||(!baselineOnly&&!consent.checked)||!Object.hasOwn(models,model.value)||!['webgpu','wasm'].includes(device.value))return;
+  if(worker||!baselineOnly||!Object.hasOwn(models,model.value)||!['webgpu','wasm'].includes(device.value))return;
   output.replaceChildren();start.disabled=true;stop.disabled=false;model.disabled=true;device.disabled=true;protocol.disabled=true;baseline.disabled=true;consent.disabled=true;
   const token=++revision;
   status.textContent='Initializing experimental worker…';
@@ -57,5 +57,5 @@ function launch(baselineOnly=false){
     worker.postMessage({model:model.value,device:device.value,protocol:baselineOnly?'baseline':protocol.value});
   }catch{finish('Experimental worker could not be started.');}
 }
-start.onclick=()=>launch(false);
+start.onclick=()=>{status.textContent='External model loading is disabled in this build.';};
 baseline.onclick=()=>launch(true);

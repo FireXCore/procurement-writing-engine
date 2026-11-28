@@ -1,5 +1,5 @@
 import {createAdaptiveReview} from '../src/adaptive-review.mjs';
-import {readPreferences,writePreferences,removePreferences} from './preference-storage.mjs';
+import {removePreferences} from './preference-storage.mjs';
 import {buildDemoSnapshot} from './regions.mjs';
 import {buildResearchSnapshot} from './routing-v2.mjs';
 const el=id=>document.getElementById(id);
@@ -10,22 +10,15 @@ let adaptive=createAdaptiveReview();
 const learn=el('learn-local'),remember=el('remember-local'),forget=el('forget-local'),learnStatus=el('learn-status'),lexicon=el('lexicon-local');
 learn.checked=false;remember.checked=false;remember.disabled=true;lexicon.checked=false;
 function clearSaved(){try{removePreferences(localStorage);return true;}catch{return false;}}
+const legacyCleared=clearSaved();
+if(!legacyCleared)learnStatus.textContent='Legacy browser preferences could not be cleared. No saved preferences are read.';
 learn.onchange=()=>{
-  adaptive.clear();remember.disabled=!learn.checked;remember.checked=false;
-  if(!learn.checked)learnStatus.textContent=clearSaved()?'Preferences disabled and cleared.':'Session cleared; browser storage could not be cleared.';
-  else learnStatus.textContent='Session-only preferences enabled.';
+  adaptive.clear();remember.checked=false;remember.disabled=true;
+  learnStatus.textContent=learn.checked?'Session-only preferences enabled.':'Preferences disabled and cleared.';
   reset();
 };
-remember.onchange=()=>{
-  if(!learn.checked){remember.checked=false;return;}
-  adaptive.invalidate();
-  if(remember.checked){
-    try{adaptive=readPreferences(localStorage);learnStatus.textContent='Saved preferences loaded; explicit votes are saved in this browser.';}
-    catch{remember.checked=false;learnStatus.textContent='Saved profile unavailable or invalid. Use Clear preferences to remove it.';}
-  }else{learnStatus.textContent=clearSaved()?'Saved profile deleted; session preferences retained.':'Browser storage could not be cleared.';}
-  reset();
-};
-forget.onclick=()=>{adaptive.clear();learnStatus.textContent=clearSaved()?'Session and saved preferences cleared.':'Session cleared; browser storage could not be cleared.';reset();};
+forget.onclick=()=>{adaptive.clear();learnStatus.textContent=clearSaved()?'Session and legacy preferences cleared.':'Session cleared; legacy browser storage could not be cleared.';reset();};
+window.addEventListener('pagehide',()=>{adaptive.clear();learn.checked=false;reset();});
 lexicon.onchange=()=>reset();
 const labels={'unsafe-region':'Unsafe or mixed-script prose skipped','no-provider':'No language provider','budget-exhausted':'Execution budget reached','provider-timeout':'Provider timed out','provider-failed':'Provider failed','invalid-provider-result':'Invalid provider response','provider-limit':'Provider finding limit reached','rejected-finding':'Unsafe or invalid proposal rejected','finding-limit':'Global finding limit reached','invalid-region-map':'Invalid region map','engine-retired':'Engine retired'};
 function reset(message='Ready for review. Language is detected automatically.'){
@@ -69,7 +62,7 @@ function finish(result,plan){
       const controls=document.createElement('div');controls.className='feedback-controls';
       for(const [decision,label] of [['prefer','Prefer next time'],['reject','Rank lower next time']]){
         const b=document.createElement('button');b.type='button';b.className='secondary';b.textContent=label;b.onclick=()=>{
-          if(session.record(groupIndex,candidateIndex,decision)){learnStatus.textContent='Preference recorded for later reviews. Text unchanged.';if(remember.checked){try{writePreferences(localStorage,adaptive);}catch{remember.checked=false;const cleared=clearSaved();learnStatus.textContent=cleared?'Preference recorded in memory; saving failed and old profile was cleared.':'Preference recorded in memory; saving and clearing old profile failed.';}}for(const control of item.querySelectorAll('.feedback-controls button'))control.disabled=true;}
+          if(session.record(groupIndex,candidateIndex,decision)){learnStatus.textContent='Preference recorded for later reviews. Text unchanged.';for(const control of item.querySelectorAll('.feedback-controls button'))control.disabled=true;}
         };controls.append(b);
       }
       parent.append(controls);

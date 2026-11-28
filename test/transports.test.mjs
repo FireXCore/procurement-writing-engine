@@ -32,3 +32,31 @@ test('real process transport with synthetic executable: stdin Vale and STE100 te
     const input=await readFile(marker,'utf8');await assert.rejects(access(input));
   } finally {await rm(dir,{force:true,recursive:true});}
 });
+
+test('cancelled direct STE100 child exits before its temporary plaintext file is removed',{skip:process.platform==='win32',timeout:10000},async()=>{
+  const dir=await mkdtemp(join(tmpdir(),'pwe-cancel-'));
+  const exec=join(dir,'fixture'), marker=join(dir,'marker.json');
+  const controller=new AbortController();
+  let pending;
+  try{
+    const body='#!'+process.execPath+'\n'+"const fs=require('node:fs');fs.writeFileSync("+JSON.stringify(marker)+",JSON.stringify({pid:process.pid,path:process.argv[2]}));process.on('SIGTERM',()=>{});setInterval(()=>{},1000);";
+    await writeFile(exec,body,{mode:0o700});
+    await chmod(exec,0o700);
+    pending=createSTE100({executable:exec}).check('Synthetic review.','en',controller.signal);
+    const observed=pending.then(()=>null,error=>error);
+    let info;
+    for(let i=0;i<100;i++){
+      try{info=JSON.parse(await readFile(marker,'utf8'));break;}catch{}
+      await new Promise(resolve=>setTimeout(resolve,20));
+    }
+    assert.ok(info,'fixture did not start');
+    controller.abort();
+    assert.ok((await observed) instanceof Error);
+    await assert.rejects(access(info.path));
+    assert.throws(()=>process.kill(info.pid,0),{code:'ESRCH'});
+  }finally{
+    controller.abort();
+    await pending?.catch(()=>{});
+    await rm(dir,{force:true,recursive:true});
+  }
+});

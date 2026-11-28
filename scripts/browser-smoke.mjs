@@ -1,7 +1,7 @@
 import { chromium,webkit,firefox } from 'playwright-core';
 import { createServer } from 'node:http';
-import { readFile,stat } from 'node:fs/promises';
-import { existsSync } from 'node:fs';
+import { readFile,open } from 'node:fs/promises';
+import { existsSync,constants } from 'node:fs';
 import { resolve,sep,extname } from 'node:path';
 import assert from 'node:assert/strict';
 import {cases,locked,extendedCases,alpha7Cases} from '../test/acceptance-fixtures.mjs';
@@ -13,7 +13,21 @@ const browserType={chromium,webkit,firefox}[browserName];
 assert.ok(browserType,'Unsupported PWE_BROWSER');
 if(browserName==='chromium')assert.ok(executablePath,'Install Chromium/Chrome or set PWE_CHROME. No browser is downloaded silently.');
 const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.wasm':'application/wasm','.svg':'image/svg+xml','.png':'image/png'};
-const server=createServer(async(req,res)=>{try{const url=new URL(req.url,'http://127.0.0.1');const path=resolve(root,'.'+(url.pathname==='/'?'/index.html':decodeURIComponent(url.pathname)));if(!path.startsWith(root+sep)||!(await stat(path)).isFile())throw Error();res.writeHead(200,{'Content-Type':mime[extname(path)]??'application/octet-stream','Cache-Control':'no-store'});res.end(await readFile(path));}catch{res.writeHead(404);res.end();}});
+const server=createServer(async(req,res)=>{
+  let file;
+  try{
+    const url=new URL(req.url,'http://127.0.0.1');
+    const path=resolve(root,'.'+(url.pathname==='/'?'/index.html':decodeURIComponent(url.pathname)));
+    if(!path.startsWith(root+sep))throw Error('Outside build root');
+    // Inspect and read the same opened descriptor; never stat then reopen a path.
+    file=await open(path,constants.O_RDONLY|(constants.O_NOFOLLOW??0)|(constants.O_NONBLOCK??0));
+    if(!(await file.stat()).isFile())throw Error('Not a regular file');
+    const body=await file.readFile();
+    res.writeHead(200,{'Content-Type':mime[extname(path)]??'application/octet-stream','Cache-Control':'no-store'});
+    res.end(body);
+  }catch{if(!res.headersSent)res.writeHead(404);res.end();}
+  finally{if(file)await file.close().catch(()=>{});}
+});
 await new Promise((ok,fail)=>{server.once('error',fail);server.listen(0,'127.0.0.1',ok);});
 let browser;
 try{
@@ -31,9 +45,9 @@ try{
   assert.equal(await page.locator('#neural-baseline').isEnabled(),true);
   assert.equal(await page.locator('#neural-consent').isChecked(),false);
   assert.match(await page.locator('#neural-status').innerText(),/Not started/);
-  await page.locator('#neural-consent').check();
-  assert.equal(await page.locator('#neural-start').isEnabled(),true);
-  await page.locator('#neural-consent').uncheck();
+  assert.equal(await page.locator('#neural-consent').isDisabled(),true);
+  // Even DOM tampering cannot enable the remote execution path.
+  await page.evaluate(()=>{const c=document.querySelector('#neural-consent');c.disabled=false;c.checked=true;c.dispatchEvent(new Event('change'));});
   assert.equal(await page.locator('#neural-start').isDisabled(),true);
   assert.deepEqual(external,[],'No external requests before explicit start');
   await page.locator('#neural-baseline').click();
@@ -134,26 +148,21 @@ try{
   assert.ok((await page.locator('#findings .finding-pair').allTextContents()).includes('لطفا → لطفاً'));
   assert.equal(await page.locator('#prose').inputValue(),'لطفا مجددا ارسال کنید.');
   await page.reload();
-  // Persistence requires explicit opt-in and a genuine vote.
+  // Legacy profile must be deleted without loading it; new votes stay in memory.
+  await page.evaluate(()=>localStorage.setItem('pwe:synthetic-demo:preferences:v1','legacy-sensitive-fixture'));
+  await page.reload();
+  assert.equal(await page.evaluate(()=>localStorage.getItem('pwe:synthetic-demo:preferences:v1')),null);
   await page.locator('#learning-options summary').click();
   await page.locator('#learn-local').check();
-  await page.locator('#remember-local').check();
+  assert.equal(await page.locator('#remember-local').isDisabled(),true);
   await page.locator('#prose').fill('Please chek the quotation.');
   await page.locator('#run').click();
   await page.waitForFunction(()=>document.documentElement.dataset.review==='complete',{},{timeout:90000});
   await page.locator('#findings li').first().getByRole('button',{name:'Prefer next time'}).first().click();
-  const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('pwe:synthetic-demo:preferences:v1')));
-  assert.equal(saved.records.length,1);
+  assert.equal(await page.evaluate(()=>localStorage.getItem('pwe:synthetic-demo:preferences:v1')),null);
   await page.reload();
   assert.equal(await page.locator('#learn-local').isChecked(),false);
-  await page.locator('#learning-options summary').click();
-  await page.locator('#learn-local').check();
-  await page.locator('#remember-local').check();
-  assert.match(await page.locator('#learn-status').innerText(),/Saved preferences loaded/);
-  await page.locator('#forget-local').click();
   assert.equal(await page.evaluate(()=>localStorage.getItem('pwe:synthetic-demo:preferences:v1')),null);
-  await page.locator('#learn-local').uncheck();
-  await page.locator('#learning-options summary').click();
   // Preserve the existing legacy comparator suite with an explicit switch.
   await page.locator('#routing-options summary').click();
   await page.locator('#routing-v2').uncheck();

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.0-alpha.9
+
+- Harden supported-script and invisible-character validation and region-edge edits.
+- Add conservative critical-term checks, local-only public demo and session-only learning.
+- Add independent locked dependency queries, consumer audit, CodeQL gate and pre-release artifact integrity checks.
+
 ## 0.1.0-alpha.8 — release candidate (unpublished)
 
 - Expose managed offline bilingual review composition and optional host-supplied Lilak dictionary preparation.
