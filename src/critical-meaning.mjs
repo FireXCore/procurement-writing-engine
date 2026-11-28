@@ -4,9 +4,16 @@ const en = new Set('no not never neither nor none nothing nobody without unless 
 const fa = new Set('نه خیر هیچ هر همه فقط صرفا باید نباید ممکن مجاز غیرمجاز ممنوع بدون مگر جز قبل بعد تا حداکثر حداقل بیشتر کمتر تایید تأیید رد قبول پذیرش اصل تقلبی الزامی اختیاری ایمن ناایمن خطرناک نمی نیست نبود ندارد نخواهد نشود نشد نکرد'.split(' '));
 const words = s => [...s.matchAll(/[\p{L}\p{M}]+(?:['’][\p{L}\p{M}]+)*/gu)].map(m => m[0]);
 const canonical = s => s.normalize('NFC').toLowerCase().replace(/['’]/gu,'').replace(/[\u064b-\u065f\u0670]/gu,'').replace(/[يك]/gu,c=>c==='ي'?'ی':'ک');
+// The documented Persian approval spelling family has one lexical identity.
+// Exact known repeated-yeh typo and hamza variants do not alter approval state.
+const approvalFamily = new Set(['تایید','تأیید','تاییید']);
+function criticalCanonical(word,language) {
+  const value=canonical(word);
+  return language==='fa'&&approvalFamily.has(value)?'تایید':value;
+}
 function signature(text, language) {
   const critical = language === 'en' ? en : fa;
-  return words(text).map(canonical).filter(t => critical.has(t) ||
+  return words(text).map(word=>criticalCanonical(word,language)).filter(t => critical.has(t) ||
     (language === 'en' && /^(?:is|are|was|were|do|does|did|ca|could|wo|would|should|must|sha|has|have|had)nt$/u.test(t)));
 }
 export function preservesCriticalMeaning(source, start, end, replacement, language) {

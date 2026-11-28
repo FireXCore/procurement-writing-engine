@@ -25,7 +25,7 @@ test('critical lexical changes rejected at core and adaptive boundaries',async()
    assert.equal(result.status,'partial');assert.equal(result.findings.length,0);assert.equal(result.apply,false);
    assert.throws(()=>createAdaptiveReview().prepare(document,{snapshotId:document.snapshotId,status:'complete',apply:false,findings:[{...candidate,provider:'fixture'}]}));
  }
- for(const [original,replacement,language] of [['teh','the','en'],['delivrey','delivery','en'],['لطفا','لطفاً','fa']]){
+ for(const [original,replacement,language] of [['teh','the','en'],['delivrey','delivery','en'],['لطفا','لطفاً','fa'],['تاییید','تأیید','fa'],['تاییید','تایید','fa'],['تایید','تأیید','fa']]){
    const r=await createEngine([provider(()=>[finding(original,replacement)])]).analyze(doc(original,language));
    assert.equal(r.status,'complete');assert.equal(r.findings[0].replacement,replacement);
  }
