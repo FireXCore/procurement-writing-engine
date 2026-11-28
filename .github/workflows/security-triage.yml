@@ -1,0 +1,65 @@
+name: PWE private diagnostic handoff
+on:
+  push:
+    branches: [dev/security-triage-alpha9]
+permissions:
+  contents: read
+jobs:
+  codeql-security:
+    name: CodeQL security-extended / JS & TS
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          ref: b6054248bc1410aa74ba65ea152d91589a329788
+      - uses: github/codeql-action/init@915412ff23e8b7659517e607487dbeae018f2934 # v4.39.5
+        with:
+          languages: javascript-typescript
+          build-mode: none
+          queries: security-extended
+          config: |
+            paths:
+              - src
+              - demo
+              - scripts
+      - uses: github/codeql-action/analyze@915412ff23e8b7659517e607487dbeae018f2934 # v4.39.5
+        with:
+          upload: never
+          upload-database: false
+          output: ${{ runner.temp }}/pwe-codeql
+      - name: Fail closed on findings (summary only)
+        run: node scripts/check-codeql.mjs "$RUNNER_TEMP/pwe-codeql"
+      - name: Encrypted maintainer triage (no plaintext details)
+        if: always()
+        shell: bash
+        run: |
+          node --input-type=module <<'JS'
+          import {readFileSync,readdirSync} from 'node:fs';
+          import {join} from 'node:path';
+          import {randomBytes,createCipheriv,publicEncrypt} from 'node:crypto';
+          const dir=join(process.env.RUNNER_TEMP,'pwe-codeql');
+          const files=readdirSync(dir).filter(x=>x.endsWith('.sarif'));
+          if(!files.length) throw Error('No SARIF available');
+          const result=[];
+          for(const file of files){
+            const report=JSON.parse(readFileSync(join(dir,file),'utf8'));
+            for(const run of report.runs){
+              const rules=new Map((run.tool.driver.rules??[]).map(r=>[r.id,r]));
+              for(const item of run.results??[]){
+                const loc=item.locations?.[0]?.physicalLocation;
+                result.push({rule:item.ruleId,level:item.level,score:rules.get(item.ruleId)?.properties?.['security-severity'],uri:loc?.artifactLocation?.uri,line:loc?.region?.startLine,endLine:loc?.region?.endLine});
+              }
+            }
+          }
+          const pub="-----BEGIN PUBLIC KEY-----\nMIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEAuFOH2ghJD939GWUYyPR/\npc8rTpqqy4OBz6ZNap59EMh05kPHuCWeneGHXDWqx/DDgJoZZCsZxKksL1dXqSH2\neieMZvPg0k+BJJoZN7R89Rczmy9hJov0HgpkUKSM9mRFDZDxNoe/0KeIC3fR3BOx\nEN+nocqMkBt5ICrW5mJh9oTOpQ/Rm/5XWg+NbzH3NsiEa7GpECHVKwj3Ukj9yrhK\nTixZLGvhYaVmIj6vRXvm7jsvd2W0hOijImlgpzGwftV62EtjKe1+glMsZS4mnxlZ\nqZLJk9iVASFfZHOlD0FxfpzQMrrt4ymaKahtxHYDt8TGxgOC6XDUTXwTfmj7QcDm\nDCC50p5pObMy8Yvc8YPkSy0mB+QZpOpDja4mnvA1Lfk7fEtI/4DH5cV/P4rPJH5f\na0TCzlpDENDx8bLKbYKnNX75b2zENWV6fLgZ1aQcgrgXa4se0PorxkiGw4/iMBuk\n0shcxnzwMIWWSj7w7gu4p/a56AztE8b3H9MRbZ7i9tTbAgMBAAE=\n-----END PUBLIC KEY-----";
+          const key=randomBytes(32),iv=randomBytes(12);
+          const cipher=createCipheriv('aes-256-gcm',key,iv);
+          const data=Buffer.concat([cipher.update(JSON.stringify(result),'utf8'),cipher.final()]);
+          const wrapped=publicEncrypt({key:pub,oaepHash:'sha256'},key);
+          console.log('PWE_TRIAGE_ENCRYPTED '+[wrapped,iv,cipher.getAuthTag(),data].map(b=>b.toString('base64')).join('.'));
+          JS
