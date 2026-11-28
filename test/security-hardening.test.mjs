@@ -43,3 +43,32 @@ test('public worker has no external runtime import; release actions use immutabl
    for(const match of workflow.matchAll(/uses:\s+actions\/[^\s@]+@([^\s]+)/g))assert.match(match[1],/^[0-9a-f]{40}$/);
  }
 });
+
+test('invisible Unicode and English joiners never reach providers or replacements',async()=>{
+ for(const text of ['te\u034fh','te\uFE0Fh','te\u200ch','te\u2060h','te\u00adh']){
+   assert.equal(eligible(text,'en'),false);
+   assert.equal(validReplacement('teh',text,'en'),false);
+   const r=await createEngine([provider(()=>{throw Error('provider must not be called');})]).analyze(doc(text));
+   assert.equal(r.diagnostics[0].code,'unsafe-region');
+ }
+ assert.equal(eligible('می‌رود','fa'),true);
+ assert.equal(validReplacement('می رود','می‌رود','fa'),true);
+});
+test('adversarial edits cannot consume a separator at protected region edges',async()=>{
+ const cases=[
+   {text:'Acme teh',regions:[{start:0,end:4,kind:'protected'},{start:4,end:8,kind:'prose',language:'en'}],original:' teh',replacement:'the',start:4,end:8},
+   {text:'teh Acme',regions:[{start:0,end:4,kind:'prose',language:'en'},{start:4,end:8,kind:'protected'}],original:'teh ',replacement:'the',start:0,end:4},
+   {text:'Acmeteh',regions:[{start:0,end:4,kind:'protected'},{start:4,end:7,kind:'prose',language:'en'}],original:'teh',replacement:'the',start:4,end:7}
+ ];
+ for(const c of cases){
+   const document={text:c.text,regions:c.regions,snapshotId:'edge'};
+   const region=c.regions.find(r=>r.kind==='prose');
+   const candidate={...finding(c.original,c.replacement),start:c.start-region.start,end:c.end-region.start};
+   const r=await createEngine([provider(()=>[candidate])]).analyze(document);
+   assert.equal(r.status,'partial');assert.deepEqual(r.findings,[]);
+   assert.throws(()=>createAdaptiveReview().prepare(document,{snapshotId:'edge',status:'complete',apply:false,findings:[{...candidate,provider:'fixture',start:c.start,end:c.end}]}));
+ }
+ const document={text:'Acme teh',regions:cases[0].regions,snapshotId:'edge-ok'};
+ const r=await createEngine([provider(()=>[{...finding('teh','the'),start:1,end:4}])]).analyze(document);
+ assert.equal(r.status,'complete');assert.equal(r.findings[0].replacement,'the');
+});

@@ -5,6 +5,8 @@ const dangerous = /[<>@#=\/\\|_%$€£¥]/u;
 const latin = /\p{Script=Latin}/u;
 const arabic = /\p{Script=Arabic}/u;
 const zwnj = /\u200c/g;
+const invisible = /\p{Default_Ignorable_Code_Point}/u;
+const edgeRisk = /[\p{L}\p{M}\p{N}\p{Cf}_/@#.+\-‐‑–—]/u;
 // Reject foreign-script letters and marks even within supported prose.
 const letterOrMark = /[\p{L}\p{M}]/u;
 const inheritedMark = /\p{M}/u;
@@ -49,7 +51,7 @@ export function validateDocument(doc) {
 // These checks are deliberately conservative; they are not a procurement parser or proof of safety.
 export function eligible(text, language) {
   const flat = text.replace(zwnj, '');
-  if (!text.trim() || technical.test(flat.replace(/[\r\n\t]/g, '')) || dangerous.test(flat) ||
+  if ((language !== 'fa' && text.includes('\u200c')) || invisible.test(flat) || !text.trim() || technical.test(flat.replace(/[\r\n\t]/g, '')) || dangerous.test(flat) ||
       /[\p{L}][\p{L}\p{M}]*[-‐‑–—][\p{L}]/u.test(flat) || /\b[A-Z]{2,}\b/.test(flat)) return false;
   return supportedScript(flat, language) && (language === 'en' ? latin.test(flat) && !arabic.test(flat) : arabic.test(flat) && !latin.test(flat));
 }
@@ -67,9 +69,34 @@ export function validReplacement(original, replacement, language) {
       (!original && !replacement)) return false;
   for (const t of [original, replacement]) {
     const clean = t.replace(zwnj, '');
-    if (badControl.test(clean) || /\p{N}/u.test(clean) || dangerous.test(clean) ||
+    if ((language !== 'fa' && t.includes('\u200c')) || invisible.test(clean) || badControl.test(clean) || /\p{N}/u.test(clean) || dangerous.test(clean) ||
         /\b[A-Z]{2,}\b/.test(clean) || /[\p{L}][\p{L}\p{M}]*[-‐‑–—][\p{L}]/u.test(clean)) return false;
     if (!supportedScript(clean, language) || (language === 'fa' ? latin.test(clean) : arabic.test(clean))) return false;
+  }
+  return true;
+}
+
+// When an edit touches a host region edge, do not let it remove a separator
+// or join a protected identifier/name to neighboring prose. The host still
+// owns the complete authoritative partition. Do not expose outside text to providers.
+export function preservesRegionEdges(text, region, start, end, replacement) {
+  const before = text.slice(region.start, region.end);
+  const after = text.slice(region.start, start) + replacement + text.slice(end, region.end);
+  if (start === region.start && start > 0) {
+    const outside = [...text.slice(Math.max(0, start - 2), start)].at(-1);
+    if (edgeRisk.test(outside)) {
+      const separator = before.match(/^\s+/u)?.[0];
+      if (!separator || !after.startsWith(separator)) return false;
+    }
+    if (/^[\p{M}\u200c]/u.test(after)) return false;
+  }
+  if (end === region.end && end < text.length) {
+    const outside = [...text.slice(end, end + 2)][0];
+    if (edgeRisk.test(outside)) {
+      const separator = before.match(/\s+$/u)?.[0];
+      if (!separator || !after.endsWith(separator)) return false;
+    }
+    if (/\u200c$/u.test(after)) return false;
   }
   return true;
 }

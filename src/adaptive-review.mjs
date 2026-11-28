@@ -1,4 +1,4 @@
-import {LIMITS,validateDocument,eligible,validRange,validReplacement,boundaries} from './regions.mjs';
+import {LIMITS,validateDocument,eligible,validRange,validReplacement,boundaries,preservesRegionEdges} from './regions.mjs';
 
 import {preservesCriticalMeaning} from './critical-meaning.mjs';
 
@@ -48,7 +48,8 @@ export function createAdaptiveReview({profile}={}){
         (f.start!==f.end||f.start>r.start&&f.end<r.end));
       if(!region||!eligible(document.text.slice(region.start,region.end),region.language)||
         (f.replacement===undefined?f.start===f.end:(!validReplacement(f.original,f.replacement,region.language)||
-          !preservesCriticalMeaning(document.text.slice(region.start,region.end),f.start-region.start,f.end-region.start,f.replacement,region.language))))throw new TypeError('Finding outside authorized prose');
+          !preservesCriticalMeaning(document.text.slice(region.start,region.end),f.start-region.start,f.end-region.start,f.replacement,region.language)||
+          !preservesRegionEdges(document.text,region,f.start,f.end,f.replacement))))throw new TypeError('Finding outside authorized prose');
       // Exact-span fusion only. Never discard competing overlapping ranges.
       // Advisory messages remain separate, including provider provenance.
       const groupKey=JSON.stringify([f.start,f.end,f.category,f.replacement===undefined?f.provider:null,f.replacement===undefined?f.rule:null]);
